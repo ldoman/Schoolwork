@@ -5,12 +5,12 @@ B457 Assignment 0
 __author__ = "Luke Doman"
 
 # Imports
-import time
+from matplotlib import *
+import numpy
 from PIL import Image
 from pylab import *
-import numpy
 from scipy.ndimage import filters
-from matplotlib import *
+import time
 
 # Problem 0
 def p0():
@@ -29,16 +29,12 @@ def p0():
 	ar_emp_crop = array(empire_cropped)
 	ar_emp_crop_rot = array(empire_cropped_rot)
 
-	"""
 	imshow(ar_emp)
 	show()
-
 	imshow(ar_emp_crop)
 	show()
-
 	imshow(ar_emp_crop_rot)
 	show()
-	"""
 	
 	# 0.4
 	empire_gray = im_empire.convert('L')
@@ -48,18 +44,15 @@ def p0():
 	ar_emp_gray = array(empire_gray)
 	ar_emp_new = toGray(im_empire)
 
-	"""
 	imshow(ar_emp_gray, cmap='gray')
 	show()	
 	imshow(ar_emp_new, cmap='gray')
 	show()
-	"""
 
 def p1():
 	# 1.1 - Please see function  convolve
 
 	#1.2
-
 	# Define filters
 	impulse_filter = [[0,0,0],[0,1,0],[0,0,0]]
 	box_filter = [[.111,.111,.111],[.111,.111,.111],[.111,.111,.111]]
@@ -78,23 +71,15 @@ def p1():
 	# Show the new images with filters
 	imshow(im_empire_impulse, cmap='gray')
 	show()
-
 	imshow(im_empire_box, cmap='gray')
 	show()
-
 	imshow(im_empire_guas, cmap='gray')
 	show()
 
-	# Convert to type image TODO something is wrong with my version of PIL and this doesn't work
+	# Convert to type image
 	im_empire_impulse = Image.fromarray(uint8(im_empire_impulse))
 	im_empire_box = Image.fromarray(im_empire_box)
 	im_empire_guas = Image.fromarray(im_empire_guas)
-
-	# Save images - can't do this since above code doesn't work...
-	#im_empire_impulse.convert('RGB')	
-	im_empire_impulse.save("empire_filter1.jpg", "JPEG")
-	#im_empire_box.save("empire_filter2.jpg")
-	#im_empire_guas.save("empire_filter3.jpg")
 
 	sep_filter1 = [[1],[2],[1]] 
 	sep_filter2 = [[1,2,1],[],[]] 
@@ -123,10 +108,8 @@ def p1():
 	# Show the new images with gaussian filters
 	imshow(ar_im_1, cmap='gray')
 	show()
-
 	imshow(ar_im_2, cmap='gray')
 	show()
-
 	imshow(ar_im_3, cmap='gray')
 	show()
 
@@ -134,7 +117,7 @@ def p1():
 
 
 
-# TODO: Fix so it can take vectors for filters
+# TODO: Update so it can take vectors for filters
 def convolve(im, fil):
 	"""
 	Takes two numpy arrays and applies convolution to them.
@@ -194,9 +177,6 @@ def toGray(im):
 
 	return ar_im
 
-
-#pil_im.show()
 if __name__ == '__main__':
-	#print Image.VERSION
 	#p0()
 	p1()

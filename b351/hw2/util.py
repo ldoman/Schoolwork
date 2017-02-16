@@ -101,6 +101,7 @@ class Graph(object):
                 return self.edges[(current_node.get_name(), next_node.get_name())] + \
                     self.min_distance(next_node, end_node, visited)
 
+    # TODO: Not optimal. Need to account for blocks in maze.
     def h_hat(self, node1, node2):
 		"""
 		Calculates the total number of moves required for node1 to reach node2.
