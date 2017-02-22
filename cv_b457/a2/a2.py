@@ -81,7 +81,7 @@ def array_to_image(arr):
 	return img
 
 # Problem 1.1 - generate all the filters
-def p1():
+def p1(display = False):
 	kernels = []
 	sigmas = [2,4,8]
 	gradients = [[[-1,1]],[[-1,0],[1,0]]]
@@ -89,32 +89,32 @@ def p1():
 	# Derivative of Gaussian filters
 	for sig in sigmas:
 		for grad in gradients:
-			kernels.append(generate_filter(sig, grad))
+			kernels.append(generate_filter(sig, grad, display))
 
 	# Center surround filters
 	gaussians = []
 	for sig in sigmas:
 		gaussians.append(generate_filter(sig, [[1]]))
 
-	kernels.append(filter_diff(gaussians[0],gaussians[1]))
-	kernels.append(filter_diff(gaussians[1],gaussians[2]))
+	kernels.append(filter_diff(gaussians[0], gaussians[1], display))
+	kernels.append(filter_diff(gaussians[1], gaussians[2], display))
 
 	return kernels
 
-def p2(im):
+# Problem 1.2 apply convolution filters to zebra image
+def p2(im, display = False):
 	ar_im = array(im)
-	kernels = p1()
+	kernels = p1(display)
 	results = []
-	results_img = []
 
 	for k in kernels:
 		result = convolve2d(ar_im, k, mode = 'same')
 		results.append(result)
-		results_img.append(array_to_image(result))
 
-	for res in results_img:
-		imshow(res)
-		show()
+	if display:
+		for res in results:
+			imshow(res)
+			show()
 
 def euclidean_distance(v1, v2):
 	"""
@@ -132,5 +132,5 @@ def p3(im):
 
 if __name__ == '__main__':
 	im = Image.open('zebra.jpg').convert('L')
-	p2(im)
+	p2(im, True)
 
