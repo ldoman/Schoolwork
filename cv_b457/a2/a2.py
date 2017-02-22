@@ -80,6 +80,40 @@ def array_to_image(arr):
 	img = Image.fromarray(data, 'L')
 	return img
 
+def get_vector(x, y, imgs):
+	"""
+	Get the 8-D vector of activation filters for the specified pixel of image
+
+	Args:
+		x (int): X position
+		y (int): Y position
+		imgs (Array of images): Activation images to generate vector from
+
+	Returns:
+		Vector of pixel values of each activation image
+	"""
+	v = []
+	for im in imgs:
+		v.append(im[x][y])
+
+	return v
+
+def euclidean_distance(v1, v2):
+	"""
+	Calculates euclidean distance between (2) 8-D vectors
+
+	Args:
+		v1 (vector): Vector 1
+		v2 (vector): Vector 2 
+
+	Returns:
+		Distance between v1 and v2
+	"""
+	dist = 0
+	for i in range(0, len(v1)):
+		dist = dist + ((v1[i]-v2[i])**2)**(1/2)
+	return dist
+
 # Problem 1.1 - generate all the filters
 def p1(display = False):
 	kernels = []
@@ -116,21 +150,32 @@ def p2(im, display = False):
 			imshow(res)
 			show()
 
-def euclidean_distance(v1, v2):
-	"""
-	Calculates euclidean distance between (2) 8-D vectors
+	return results
 
-	Args:
-		v1 (vector): Vector of 
-	"""
-	# TODO
-
-def p3(im):
+def p3(im, display = False):
+	act_imgs = p2(im)
 	ar_im = array(im)
-	
-	
+	size_x = len(ar_im)
+	size_y = len(ar_im[0])
+
+	center_pixel_x = int(size_x/2)
+	center_pixel_y = int(size_y/2)
+	center_vector = get_vector(center_pixel_x, center_pixel_y, act_imgs)
+	#print center_vector
+
+	D = np.zeros(shape=(size_x,size_y))
+
+	for i in range(0, size_y):
+		for j in range(0, size_x):
+			v = get_vector(j, i, act_imgs)
+			#print v
+			D[i][j] = euclidean_distance(center_vector, v)
+
+	if display:
+		imshow(D, cmap = 'gray')
+		show()
 
 if __name__ == '__main__':
 	im = Image.open('zebra.jpg').convert('L')
-	p2(im, True)
-
+	#p2(im, True)
+	p3(im, True)
