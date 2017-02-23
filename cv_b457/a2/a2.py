@@ -5,6 +5,7 @@ B457 Assignment 2
 __author__ = "Luke Doman"
 
 # Imports
+import math
 from matplotlib import *
 import numpy as np
 from PIL import Image
@@ -111,8 +112,8 @@ def euclidean_distance(v1, v2):
 	"""
 	dist = 0
 	for i in range(0, len(v1)):
-		dist = dist + ((v1[i]-v2[i])**2)**(1/2)
-	return dist
+		dist = dist + math.pow(v1[i]-v2[i], 2)
+	return math.sqrt(dist)
 
 # Problem 1.1 - generate all the filters
 def p1(display = False):
@@ -152,6 +153,7 @@ def p2(im, display = False):
 
 	return results
 
+# Problem 1.3 Texture comparison
 def p3(im, display = False):
 	act_imgs = p2(im)
 	ar_im = array(im)
@@ -161,18 +163,16 @@ def p3(im, display = False):
 	center_pixel_x = int(size_x/2)
 	center_pixel_y = int(size_y/2)
 	center_vector = get_vector(center_pixel_x, center_pixel_y, act_imgs)
-	#print center_vector
 
 	D = np.zeros(shape=(size_x,size_y))
 
 	for i in range(0, size_y):
 		for j in range(0, size_x):
 			v = get_vector(j, i, act_imgs)
-			#print v
-			D[i][j] = euclidean_distance(center_vector, v)
+			D[j][i] = euclidean_distance(center_vector, v)
 
 	if display:
-		imshow(D, cmap = 'gray')
+		imshow(D, cmap='gray')
 		show()
 
 if __name__ == '__main__':
