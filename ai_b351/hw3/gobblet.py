@@ -53,6 +53,8 @@ class Gobblet(object):
 
 	def __str__(self):
 		#return "Gobblet: %s, %s, %s" % (self.size, self.color, self.stack)
+		#print("Size: %s" % self.size)
+		#print("Color: %s" %	 self.color)
 		return "%s%s" % (self.size, self.color)
 
 class Board(object):
@@ -125,10 +127,13 @@ class Board(object):
 			0: If successful
 			-1: If move is invalid
 		"""
+		if not gob:
+			print("Invalid gobblet object.")
+			return -1
+
 		dest = self.get_gob_at(pos)
 
 		#print(dest)
-		
 		src_top = gob.pop()
 		src_size = gob.get_size()
 		src_color = gob.get_color()
@@ -142,7 +147,7 @@ class Board(object):
 		else:
 			new_stack = []
 
-		new_gob = Gobblet(src_size, new_stack)
+		new_gob = Gobblet(src_size, src_color, new_stack)
 		new_gob.push((src_size,src_color))
 
 		self.grid[pos[0]][pos[1]] = new_gob
@@ -235,7 +240,7 @@ class Player(object):
 	def __init__(self, player, color):
 		self.player = player
 		self.color = color
-		self.gobblets = [Gobblet(4, self.color, [1,2,3,4]) for n in range(0,3)]
+		self.gobblets = [Gobblet(4, color, [1,2,3,4]) for n in range(0,3)]
 
 	def get_move(self, board):
 		"""
@@ -252,12 +257,13 @@ class Player(object):
 		if self.player == 0: # Human
 			print(board)
 			self.print_state()
-			action = int(input("Place off board gob (0) or Move one on the board (1): "))
+			print ("\n")
+			action = int(input("Place off board gobblet (0) or Move one on the board (1): "))
 			if action == 0:
-				gob = int(input("Which gob? Index 0, 1, or 2: "))
-				posx = int(input("x destination: "))
-				posy = int(input("y destination: "))
-				return (action, (gob, (posx, posy)))
+				gob = int(input("Gobblet from which stack? Index 0, 1, or 2: "))
+				posx = int(input("X destination: "))
+				posy = int(input("Y destination: "))
+				return (action, (gob, (posy, posx)))
 			elif action == 1:
 				pos = input("Source position in form (x,y): ")
 				pos2 = input("Destination position in form (x,y): ")
@@ -277,22 +283,24 @@ class Player(object):
 	def remove_stack(self, i):
 		gob = self.get_gob(i)
 		if gob:
-			new_size = gob.get_size()
-			gob.pop()
+			new_size = gob.get_size()-1
 			if new_size > 0:
-				new_gob = Gobblet(new_size, self.color, gob.get_stack())
+				gob.pop()
+				self.gobblets[i] = Gobblet(new_size, self.color, gob.get_stack())
 			else:
-				new_gob = None
-			self.gobblets[i] = new_gob
+				self.gobblets.pop(i)
 		else:
 			print("Gob doesn't exist")
 
 	def print_state(self):
-		print([str(g) for g in self.gobblets])
+		print("Off board: " + str([str(g) for g in self.gobblets]))
 		#print("Current off board stacks: %s") % (str(self.gobblets))
 
+	def __str__(self):
+		return "Black" if self.color == 0 else "White"
 
-def gobby(players, level, time):
+
+def gobby(players, level, time, display = False):
 	"""
 	Plays Gobblet witg passed parameters. 
 	Index 0 of turns will always be black
@@ -307,11 +315,16 @@ def gobby(players, level, time):
 	white_player = Player(turns[1], 1)
 
 	players = [black_player, white_player]
-
-	while state not in history or board.check_win() != -1:
-		#history.append(state)
+	#while state not in history or board.check_win() != -1:
+	while board.check_win() == -1:
+		history.append(state)
 		current_turn = len(history) % 2
 		current_player = players[current_turn]
+
+		if display:
+			print ("\n")
+			print("Current player : %s" % (current_player))
+			print ("\n")
 
 		start_time = 0#time.time()
 		move = -1
@@ -335,6 +348,7 @@ def make_move(move, player, board):
 		gob = player.get_gob(move[1][0])
 		pos = move[1][1]
 		valid = board.place(gob, pos)
+		player.remove_stack(move[1][0])
 	elif move[0] == 1: # Move
 		pos = move[1][0]
 		pos2 = move[1][1]
@@ -346,5 +360,5 @@ def make_move(move, player, board):
 	return valid
 
 if __name__ == '__main__':
-	gobby('h2', 4, 20)
+	gobby('h2', 4, 20, True)
 
