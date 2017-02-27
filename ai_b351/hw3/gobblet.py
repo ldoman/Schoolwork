@@ -13,8 +13,8 @@ from util import Graph,Node,Stack # Hw1 items
 # Constants
 BOARD_SIZE = 4
 
-class Goblet(object):
-	""" Goblet game peice object """
+class Gobblet(object):
+	""" Gobblet game peice object """
 	def __init__(self, size, color, stack = []:
 		self.size = size
 		self.color = color
@@ -50,7 +50,7 @@ class Goblet(object):
 		return "Goblet: %s, %s, %s" % (self.size, self.color, self.stack)
 
 class Board(object):
-	""" Goblet board object """
+	""" Gobblet board object """
 	def __init__(self):
 		self.grid = [[None for n in range(0,BOARD_SIZE)] for n in range(0,BOARD_SIZE)]
 
@@ -65,8 +65,8 @@ class Board(object):
 		Move a goblet from one position on the board to another.
 
 		Args:
-			pos_1(Tuple): Current postion of goblet to move. Tuple in form of (x, y) position on board.
-			pos_2(Tuple): Goblet destination. Tuple in form of (x, y) position on board.
+			pos_1(Tuple): Current postion of gobblet to move. Tuple in form of (x, y) position on board.
+			pos_2(Tuple): Gobblet destination. Tuple in form of (x, y) position on board.
 
 		Returns:
 			0: If successful
