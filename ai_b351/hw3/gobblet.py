@@ -61,6 +61,17 @@ class Board(object):
 		return self.grid[pos[0]][pos[1]]
 
 	def move(self, pos_1, pos_2):
+		"""
+		Move a goblet from one position on the board to another.
+
+		Args:
+			pos_1(Tuple): Current postion of goblet to move. Tuple in form of (x, y) position on board.
+			pos_2(Tuple): Goblet destination. Tuple in form of (x, y) position on board.
+
+		Returns:
+			0: If successful
+			-1: If move is invalid
+		"""
 		src = get_gob_at(pos_1)
 		dest = get_gob_at(pos_2)
 
@@ -97,6 +108,14 @@ class Board(object):
 		return 0
 
 	def check_win(self):
+		"""
+		Check the board to see if a player has reached a win state.
+
+		Returns:
+			-1: No wins
+			0: Black wins
+			1: White wins
+		"""
 		white_dl, black_dl, white_dr, black_dr = 0
 		for i in range(0, BOARD_SIZE):
 			white_v, white_h, black_v, black_h = 0
@@ -134,6 +153,15 @@ class Board(object):
 		return -1
 
 	def evaluation(self, player):
+		"""
+		Evaluates proximity to a win for the passed player.
+
+		Args:
+			player (int): Player to evaluate. (0 = Black, 1 = White)
+
+		Returns:
+			Int: Player's largest number of goblets in a row
+		"""
 		player_dl, player_dl, player_v, player_h = 0
 		history = []
 		for i in range(0, BOARD_SIZE):
