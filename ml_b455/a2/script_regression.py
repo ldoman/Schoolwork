@@ -6,7 +6,8 @@ import numpy as np
 
 import dataloader as dtl
 import regressionalgorithms as algs
-import plotfcns
+from utilities import *
+#import plotfcns TODO: Fix import error
 
 def l2err(prediction,ytest):
     """ l2 error (i.e., root-mean-squared-error) """
@@ -34,6 +35,8 @@ if __name__ == '__main__':
                 'Mean': algs.MeanPredictor(),
                 'FSLinearRegression5': algs.FSLinearRegression({'features': [1,2,3,4,5]}),
                 'FSLinearRegression50': algs.FSLinearRegression({'features': range(50)}),
+#				'FSLinearRegression100': algs.FSLinearRegression({'features': [random.randrange(0,385) for x in range(0,75)]}),
+#				'FSLinearRegression385': algs.FSLinearRegression({'features': range(385)}),
                 'RidgeLinearRegression': algs.RidgeLinearRegression(),
              }
     numalgs = len(regressionalgs)
@@ -72,6 +75,8 @@ if __name__ == '__main__':
 
     for learnername in regressionalgs:
         besterror = np.mean(errors[learnername][0,:])
+        errs = errors[learnername]
+        print ('Standard error for ' + learnername + ': ' + str(stdev(errs)/math.sqrt(len(errs)))) # TODO: Test
         bestparams = 0
         for p in range(numparams):
             aveerror = np.mean(errors[learnername][p,:])

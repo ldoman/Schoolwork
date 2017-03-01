@@ -116,7 +116,47 @@ class RidgeLinearRegression(Regressor):
     """
     def __init__( self, parameters={} ):
         # Default parameters, any of which can be overwritten by values passed to params
-        self.params = {'regwgt': 0.5}
+        self.params = {'regwgt': 0.01}
         self.reset(parameters)
 
-    
+    def learn(self, Xtrain, ytrain, lam = .01):
+        """ Learns using the traindata """
+        # Dividing by numsamples before adding ridge regularization
+        # to make the regularization parameter not dependent on numsamples
+        X = np.hstack((np.ones((Xtrain.shape[0], 1)), Xtrain))
+        G = lam * np.eye(X.shape[1])
+        G[0, 0] = 0
+        #Xless = Xtrain[:,self.params['features']]
+        self.weights = np.dot(np.linalg.inv(np.dot(X.T, X) + np.dot(G.T, G)),
+                             np.dot(X.T, ytrain))
+        #self.weights = np.dot(np.dot(np.linalg.inv(np.dot(Xless.T,Xless)/numsamples), Xless.T),ytrain)/numsamples
+
+    def predict(self, Xtest):
+        X = np.hstack((np.ones((Xtest.shape[0], 1)), Xtest))
+        return np.dot(X, self.weights)
+
+class MPLinearRegression(Regressor):
+    """
+    TODO
+    """
+    def __init__( self, parameters={} ):
+        # Default parameters, any of which can be overwritten by values passed to params
+        self.params = {'regwgt': 0.01}
+        self.reset(parameters)
+
+    def select_features(self, X, y, e):
+        x_tilde = X
+
+    def learn(self, Xtrain, ytrain):
+            """ Learns using the traindata """
+            # Dividing by numsamples before adding ridge regularization
+            # to make the regularization parameter not dependent on numsamples
+            numsamples = Xtrain.shape[0]
+            Xless = Xtrain[:,self.params['features']]
+            self.weights = np.dot(np.dot(np.linalg.inv(np.dot(Xless.T,Xless)/numsamples), Xless.T),ytrain)/numsamples
+
+    def predict(self, Xtest):
+        Xless = Xtest[:,self.params['features']]
+        ytest = np.dot(Xless, self.weights)
+        return ytest
+
