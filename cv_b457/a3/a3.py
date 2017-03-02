@@ -108,6 +108,24 @@ def filter_diff(f1, f2, display = False):
 
 	return new_filter
 
+def get_vector(x, y, imgs):
+	"""
+	Get the 8-D vector of activation filters for the specified pixel of image
+
+	Args:
+		x (int): X position
+		y (int): Y position
+		imgs (Array of images): Activation images to generate vector from
+
+	Returns:
+		Vector of pixel values of each activation image
+	"""
+	v = []
+	for im in imgs:
+		v.append(im[x][y])
+
+	return v
+
 # Problem 1
 def p1():
 	class1 = 2.0 * randn(100,2)
@@ -170,7 +188,31 @@ def p2(image, k = 4):
 
 # Problem 3
 def p3(image, k = 4):
-	a2_p2(image)
+	im = Image.open(image).convert('L')
+	act_imgs = a2_p2(im)
+	im = array(Image.open(image).convert('RGB'))
+	size_y = len(im)
+	size_x = len(im[0])
+
+	# Make im with 8d vectors for each pixel
+	v_8d = []
+	for i in range(0, size_y):
+		for j in range(0, size_x):
+			v = get_vector(i, j, act_imgs)
+			v_8d.append(v)
+
+	features = array(v_8d, dtype = float)
+	centroids,variance = kmeans(features,k)
+	code,distance = vq(features,centroids)
+
+	shapes = ['*','r.','g.','b.','p.','o.']
+	figure()
+	for i in range(0, k):
+		ndx = where(code==i)[0]
+		plot(features[ndx,0],features[ndx,1],features[ndx,2],shapes[i])
+	plot(centroids[:,0],centroids[:,1],'go')
+	axis('off')
+	show()
 
 
 # Problem 1.1 - generate all the filters
@@ -215,5 +257,5 @@ if __name__ == '__main__':
 	#im = Image.open('zebra.jpg').convert('L')
 	#p1()
 	#p2('fish.jpg')
-	p3('fish.jpg')
+	p3('zebra.jpg')
 
