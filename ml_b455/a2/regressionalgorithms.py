@@ -121,19 +121,12 @@ class RidgeLinearRegression(Regressor):
 
     def learn(self, Xtrain, ytrain, lam = .01):
         """ Learns using the traindata """
-        # Dividing by numsamples before adding ridge regularization
-        # to make the regularization parameter not dependent on numsamples
-        X = np.hstack((np.ones((Xtrain.shape[0], 1)), Xtrain))
-        G = lam * np.eye(X.shape[1])
-        G[0, 0] = 0
-        #Xless = Xtrain[:,self.params['features']]
-        self.weights = np.dot(np.linalg.inv(np.dot(X.T, X) + np.dot(G.T, G)),
-                             np.dot(X.T, ytrain))
-        #self.weights = np.dot(np.dot(np.linalg.inv(np.dot(Xless.T,Xless)/numsamples), Xless.T),ytrain)/numsamples
+        xtx = np.dot(Xtrain.T, Xtrain)
+        lambda_i = lam * np.eye(Xtrain.shape[1])
+        self.weights = np.dot(np.linalg.inv(xtx + lambda_i), np.dot(Xtrain.T, ytrain))
 
     def predict(self, Xtest):
-        X = np.hstack((np.ones((Xtest.shape[0], 1)), Xtest))
-        return np.dot(X, self.weights)
+        return np.dot(Xtest, self.weights)
 
 class MPLinearRegression(Regressor):
     """
