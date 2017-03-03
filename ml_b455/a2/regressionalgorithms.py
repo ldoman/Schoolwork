@@ -125,32 +125,25 @@ class RidgeLinearRegression(Regressor):
     def predict(self, Xtest):
         return np.dot(Xtest, self.weights)
 
+# TODO: Implement
 class MPLinearRegression(Regressor):
     """
-    TODO
+    Problem 2d
     """
     def __init__( self, parameters={} ):
         # Default parameters, any of which can be overwritten by values passed to params
         self.params = {'regwgt': 0.01}
         self.reset(parameters)
 
-    def select_features(self, X, y, e):
-        x_tilde = X
-
     def learn(self, Xtrain, ytrain):
             """ Learns using the traindata """
-            # Dividing by numsamples before adding ridge regularization
-            # to make the regularization parameter not dependent on numsamples
-            numsamples = Xtrain.shape[0]
-            Xless = Xtrain[:,self.params['features']]
             self.weights = np.dot(np.dot(np.linalg.inv(np.dot(Xless.T,Xless)/numsamples), Xless.T),ytrain)/numsamples
 
     def predict(self, Xtest):
-        Xless = Xtest[:,self.params['features']]
-        ytest = np.dot(Xless, self.weights)
-        return ytest
+        return np.dot(Xtest, self.weights)
 
-class Lasso(Regressor):
+# TODO: Runs forever.
+class LassoRegression(Regressor):
     """
     Problem 2e
     """
@@ -158,9 +151,6 @@ class Lasso(Regressor):
         # Default parameters, any of which can be overwritten by values passed to params
         self.params = {'regwgt': 0.01}
         self.reset(parameters)
-
-    def select_features(self, X, y, e):
-        x_tilde = X
 
     def err(self, X, y, w, lam):
         """
@@ -198,7 +188,7 @@ class Lasso(Regressor):
         else:
             return w + nl
 
-    def bgd(self, X, y, lam):
+    def bgd_l1(self, X, y, lam):
         """
         Batch gradient descent as defined on page 62 of notes.
 
@@ -226,7 +216,8 @@ class Lasso(Regressor):
 
         while abs(self.err(X, y, w, lam) - err).any() > tolerance:
             if i > iterations:
-                print "This is taking a while"
+                print "Iteration limit exceeded."
+                break
             err = self.err(X, y, w, lam)
             arg = w - np.dot(np.dot(n, xx), w) + np.dot(n, xy)
             w = self.prox(n, lam, arg)
@@ -236,68 +227,111 @@ class Lasso(Regressor):
 
     def learn(self, Xtrain, ytrain, lam = .01):
         """ Learns using the traindata """
-        self.weights = self.bgd(Xtrain, ytrain, lam)
+        self.weights = self.bgd_l1(Xtrain, ytrain, lam)
 
     def predict(self, Xtest):
         return np.dot(Xtest, self.weights)
 
-
-class BatchGradientDescent(Regressor):
+# TODO: Fix
+class StochasticGradientDescent(Regressor):
     """
-    Problem 2e
+    Problem 2f
     """
     def __init__( self, parameters={}, lam = .01 ):
-        # Default parameters, any of which can be overwritten by values passed to params
         self.params = {'regwgt': 0.01}
         self.reset(parameters)
 
-    def select_features(self, X, y, e):
-        x_tilde = X
-
-    def err(self, X, y, w, lam):
+    def err(self, X, y, t, w):
         """
         Error calculation as defined on page 62 of notes.
 
         Args:
             X (Matrix): Input data
             y (Vector): Output vector
-            w (float?): Weight
-            lam (float): Regularization parameter
+            t (int): Current iteration
+            w (float): Weight
+
+        Returns:
+            Error
+        """
+        #y = y[:, np.newaxis]
+        return np.dot((np.dot(X[t].T, w) - y[t]), X[t])
+
+    def sgd(self, X, y):
+        """
+        Stochastic gradient descent as defined on page 63 of notes.
+
+        Args:
+            X (Matrix): Input data
+            y (Vector): Output vector
+
+        Returns:
+            Updated weights
+        """
+        numsamples = X.shape[0]
+        w = 0
+        n = .01
+
+        for t in range(0, numsamples):
+            g = self.err(X, y, t, w)
+            w = w - np.dot(n, g)
+
+        return w
+
+    def learn(self, Xtrain, ytrain):
+        """ Learns using the traindata """
+        self.weights = self.sgd(Xtrain, ytrain)
+
+    def predict(self, Xtest):
+        return np.dot(Xtest, self.weights)
+
+# TODO: Fix
+class BatchGradientDescent(Regressor):
+    """
+    Problem 2g
+    """
+    def __init__( self, parameters={}, lam = .01 ):
+        self.params = {'regwgt': 0.01}
+        self.reset(parameters)
+
+    def err(self, X, y, w):
+        """
+        Error calculation as defined on page 62 of notes.
+
+        Args:
+            X (Matrix): Input data
+            y (Vector): Output vector
+            w (float): Weight
 
         Returns:
             Error
         """
         y = y[:, np.newaxis]
-        return np.dot((np.dot(X,w) - y).T, np.dot(X,w) - y) + (lam * np.linalg.norm(w))
+        return np.dot((np.dot(X,w) - y).T, np.dot(X,w) - y)
 
-    def prox(self, n, lam, w):
+    def line_search(self, w, g, err):
         """
-        Thresholding fuction as defined on page 62 of notes.
+        Finds step size
 
         Args:
-            n (int): Stepsize
-            lam (float): Regularization parameter
-            w (float?): Weight
+            w (float): Weight
+            g (Vector): Gradient
+            err (Vector): Error
 
         Returns:
-            Updated weight
+            Step size
         """
-        nl = n * lam
-        if w.any() > nl:
-            return w - nl
-        elif abs(w).any() <= nl:
-            return 0
-        else:
-            return w + nl
+        # TODO: Implement
+        return -1
+
 
     def bgd(self, X, y, lam):
         """
-        Batch gradient descent as defined on page 62 of notes.
+        Batch gradient descent as defined on page 63 of notes.
 
         Args:
             X (Matrix): Input data
             y (Vector): Output vector
-            lam (float): Regularization parameter
 
         Returns:
             Updated weights
@@ -308,20 +342,17 @@ class BatchGradientDescent(Regressor):
         tolerance = .18
         xx = np.dot(X.T,X)/numsamples
         xy = np.dot(X.T,y)/numsamples
-        n = 1/(2 * np.linalg.norm(xx))
         iterations = 100000
         i = 0
 
-        #print "xx: " + str(xx)
-        #print "xy: " + str(xy)
-        #print "n: " + str(n)
-
-        while abs(self.err(X, y, w, lam) - err).any() > tolerance:
+        while abs(self.err(X, y, w) - err).any() > tolerance:
             if i > iterations:
-                print "This is taking a while"
+                print "Iteration limit exceeded."
+                break
             err = self.err(X, y, w, lam)
-            arg = w - n * xx * w + n * xy
-            w = self.prox(n, lam, arg)
+            g = np.dot(X.T, np.dot(X,w) - y[:, np.newaxis])/numsamples
+            n = self.line_search(w, g, err)
+            w = w - np.dot(g,n)
             i = i + 1
 
         return w
