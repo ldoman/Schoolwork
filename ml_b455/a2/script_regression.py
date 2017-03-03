@@ -7,7 +7,6 @@ import numpy as np
 import dataloader as dtl
 import regressionalgorithms as algs
 from utilities import *
-#import plotfcns TODO: Fix import error
 
 def l2err(prediction,ytest):
     """ l2 error (i.e., root-mean-squared-error) """
@@ -33,11 +32,12 @@ if __name__ == '__main__':
 
     regressionalgs = {'Random': algs.Regressor(),
                 'Mean': algs.MeanPredictor(),
-                'FSLinearRegression5': algs.FSLinearRegression({'features': [1,2,3,4,5]}),
-                'FSLinearRegression50': algs.FSLinearRegression({'features': range(50)}),
+#                'FSLinearRegression5': algs.FSLinearRegression({'features': [1,2,3,4,5]}),
+#                'FSLinearRegression50': algs.FSLinearRegression({'features': range(50)}),
 #				'FSLinearRegression100': algs.FSLinearRegression({'features': [random.randrange(0,385) for x in range(0,75)]}),
 #				'FSLinearRegression385': algs.FSLinearRegression({'features': range(385)}),
-                'RidgeLinearRegression': algs.RidgeLinearRegression(),
+#                'RidgeLinearRegression': algs.RidgeLinearRegression(),
+                'Lasso': algs.LassoRegression(),
              }
     numalgs = len(regressionalgs)
 

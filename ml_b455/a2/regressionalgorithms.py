@@ -1,7 +1,7 @@
 from __future__ import division  # floating point division
 import numpy as np
 import math
-
+import sys
 import utilities as utils
 
 class Regressor:
@@ -110,9 +110,6 @@ class FSLinearRegression(Regressor):
 class RidgeLinearRegression(Regressor):
     """
     Linear Regression with ridge regularization (l2 regularization)
-    TODO: currently not implemented, you must implement this method
-    Stub is here to make this more clear
-    Below you will also need to implement other classes for the other algorithms
     """
     def __init__( self, parameters={} ):
         # Default parameters, any of which can be overwritten by values passed to params
@@ -153,3 +150,185 @@ class MPLinearRegression(Regressor):
         ytest = np.dot(Xless, self.weights)
         return ytest
 
+class Lasso(Regressor):
+    """
+    Problem 2e
+    """
+    def __init__( self, parameters={}, lam = .01 ):
+        # Default parameters, any of which can be overwritten by values passed to params
+        self.params = {'regwgt': 0.01}
+        self.reset(parameters)
+
+    def select_features(self, X, y, e):
+        x_tilde = X
+
+    def err(self, X, y, w, lam):
+        """
+        Error calculation as defined on page 62 of notes.
+
+        Args:
+            X (Matrix): Input data
+            y (Vector): Output vector
+            w (float?): Weight
+            lam (float): Regularization parameter
+
+        Returns:
+            Error
+        """
+        y = y[:, np.newaxis]
+        return np.dot((np.dot(X,w) - y).T, np.dot(X,w) - y) + (lam * np.linalg.norm(w))
+
+    def prox(self, n, lam, w):
+        """
+        Thresholding fuction as defined on page 62 of notes.
+
+        Args:
+            n (int): Stepsize
+            lam (float): Regularization parameter
+            w (float?): Weight
+
+        Returns:
+            Updated weight
+        """
+        nl = n * lam
+        if w.any() > nl:
+            return w - nl
+        elif abs(w).any() <= nl:
+            return 0
+        else:
+            return w + nl
+
+    def bgd(self, X, y, lam):
+        """
+        Batch gradient descent as defined on page 62 of notes.
+
+        Args:
+            X (Matrix): Input data
+            y (Vector): Output vector
+            lam (float): Regularization parameter
+
+        Returns:
+            Updated weights
+        """
+        numsamples = X.shape[0]
+        w = 0
+        err = sys.maxsize
+        tolerance = .18
+        xx = np.dot(X.T,X)/numsamples
+        xy = np.dot(X.T,y)/numsamples
+        n = 1/(2 * np.linalg.norm(xx))
+        iterations = 100000
+        i = 0
+
+        #print "xx: " + str(xx)
+        #print "xy: " + str(xy)
+        #print "n: " + str(n)
+
+        while abs(self.err(X, y, w, lam) - err).any() > tolerance:
+            if i > iterations:
+                print "This is taking a while"
+            err = self.err(X, y, w, lam)
+            arg = w - np.dot(np.dot(n, xx), w) + np.dot(n, xy)
+            w = self.prox(n, lam, arg)
+            i = i + 1
+
+        return w
+
+    def learn(self, Xtrain, ytrain, lam = .01):
+        """ Learns using the traindata """
+        self.weights = self.bgd(Xtrain, ytrain, lam)
+
+    def predict(self, Xtest):
+        return np.dot(Xtest, self.weights)
+
+
+class BatchGradientDescent(Regressor):
+    """
+    Problem 2e
+    """
+    def __init__( self, parameters={}, lam = .01 ):
+        # Default parameters, any of which can be overwritten by values passed to params
+        self.params = {'regwgt': 0.01}
+        self.reset(parameters)
+
+    def select_features(self, X, y, e):
+        x_tilde = X
+
+    def err(self, X, y, w, lam):
+        """
+        Error calculation as defined on page 62 of notes.
+
+        Args:
+            X (Matrix): Input data
+            y (Vector): Output vector
+            w (float?): Weight
+            lam (float): Regularization parameter
+
+        Returns:
+            Error
+        """
+        y = y[:, np.newaxis]
+        return np.dot((np.dot(X,w) - y).T, np.dot(X,w) - y) + (lam * np.linalg.norm(w))
+
+    def prox(self, n, lam, w):
+        """
+        Thresholding fuction as defined on page 62 of notes.
+
+        Args:
+            n (int): Stepsize
+            lam (float): Regularization parameter
+            w (float?): Weight
+
+        Returns:
+            Updated weight
+        """
+        nl = n * lam
+        if w.any() > nl:
+            return w - nl
+        elif abs(w).any() <= nl:
+            return 0
+        else:
+            return w + nl
+
+    def bgd(self, X, y, lam):
+        """
+        Batch gradient descent as defined on page 62 of notes.
+
+        Args:
+            X (Matrix): Input data
+            y (Vector): Output vector
+            lam (float): Regularization parameter
+
+        Returns:
+            Updated weights
+        """
+        numsamples = X.shape[0]
+        w = 0
+        err = sys.maxsize
+        tolerance = .18
+        xx = np.dot(X.T,X)/numsamples
+        xy = np.dot(X.T,y)/numsamples
+        n = 1/(2 * np.linalg.norm(xx))
+        iterations = 100000
+        i = 0
+
+        #print "xx: " + str(xx)
+        #print "xy: " + str(xy)
+        #print "n: " + str(n)
+
+        while abs(self.err(X, y, w, lam) - err).any() > tolerance:
+            if i > iterations:
+                print "This is taking a while"
+            err = self.err(X, y, w, lam)
+            arg = w - n * xx * w + n * xy
+            w = self.prox(n, lam, arg)
+            i = i + 1
+
+        return w
+
+    def learn(self, Xtrain, ytrain, lam = .01):
+        """ Learns using the traindata """
+        self.weights = self.bgd(Xtrain, ytrain, lam)
+
+    def predict(self, Xtest):
+        return np.dot(Xtest, self.weights)
