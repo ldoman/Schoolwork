@@ -349,7 +349,7 @@ class BatchGradientDescent(Regressor):
             if i > iterations:
                 print "Iteration limit exceeded."
                 break
-            err = self.err(X, y, w, lam)
+            err = self.err(X, y, w)
             g = np.dot(X.T, np.dot(X,w) - y[:, np.newaxis])/numsamples
             n = self.line_search(w, g, err)
             w = w - np.dot(g,n)
