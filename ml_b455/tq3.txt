@@ -1,0 +1,1 @@
+In a scenario where machine learning was desired to be used, but not enough data is present, would it be a reasonable approach to use a generative machine learning technique to create a larger data set to work from? Would using this generated dataset to apply discriminative learning techniques be too biased to be considered viable?
