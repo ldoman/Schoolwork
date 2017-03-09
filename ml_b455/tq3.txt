@@ -1,1 +1,7 @@
-In a scenario where machine learning was desired to be used, but not enough data is present, would it be a reasonable approach to use a generative machine learning technique to create a larger data set to work from? Would using this generated dataset to apply discriminative learning techniques be too biased to be considered viable?
+In a scenario where machine learning is desired to be used, but not enough data is present, would it be a reasonable approach to use a generative machine learning technique to create a larger data set to work from? Would then using this generated dataset to apply discriminative learning techniques be too biased/overfit to be considered viable?
+
+Take for example a scenario where we have a dataset that falls on a Bernoulli distribution. Here we could use naive bayes or logistic regression, and both would be reasonable approachs. I imagine there are several scenarios like this with other algorithms that we haven't covered. In this situation, is there any methodology for determining which algorithm use? Does it just come down to which is computationally more efficient or preference?
+
+Neural nets seem to come up in the news with gradiose titles pretty regularly these days. One recent one being Google's neural net invented its own secret language. It's difficult to parse what actually happens behind the scenes in these articles while being new to this. In this secret language article, is this just an exageration of a neural net doing a form of dictionary learning? Or is it simply referencing the increase of dimensionality in hidden layers?
+
+https://techcrunch.com/2016/11/22/googles-ai-translation-tool-seems-to-have-invented-its-own-secret-internal-language/
