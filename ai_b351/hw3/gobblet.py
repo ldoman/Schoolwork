@@ -70,6 +70,12 @@ class Board(object):
 	def get_gob_at(self, pos):
 		return self.grid[pos[0]][pos[1]]
 
+	def get_gob_pos(self, gob):
+		for i in range(0, BOARD_SIZE):
+			for j in range(0, BOARD_SIZE):
+				if self.grid[i][j] == gob:
+					return (i, j)
+
 	def move(self, pos_1, pos_2):
 		"""
 		Move a Gobblet from one position on the board to another.
@@ -291,7 +297,7 @@ class AlphaBeta(object): # TODO: Complete
 		self.player_color = player_color
 		self.board = board
 		self.level = level
-		self.state = None
+		self.state = board
 		self.actions = {}
 
 	def cutoff_test(self, depth, state):
@@ -311,7 +317,7 @@ class AlphaBeta(object): # TODO: Complete
 			return False
 
 	def search(self):
-		move_value = self.max_value(state, -sys.maxsize, sys.maxsize)
+		move_value = self.max_value(self.state, -sys.maxsize, sys.maxsize, self.level)
 		return self.actions[move_value]
 
 	def max_value(self, state, alpha, beta, depth):
@@ -327,7 +333,7 @@ class AlphaBeta(object): # TODO: Complete
 		Returns:
 			Max valued state acheivable
 		"""
-		if self.cutoff_test(depth):
+		if self.cutoff_test(depth, state):
 			return self.evaluation(state, self.player)
 		move_value = -sys.maxsize
 		for action in self.get_actions(state):
@@ -373,6 +379,14 @@ class AlphaBeta(object): # TODO: Complete
 		"""
 		actions = []
 
+		# Collect all pieces on board
+		on_board = []
+		for i in range(0, BOARD_SIZE):
+			for j in range(0, BOARD_SIZE):
+				gob = state.get_board()[i][j]
+				if gob and gob.get_color() == self.player_color:
+					on_baord.append(gob)
+
 		for i in range(0, BOARD_SIZE):
 			for j in range(0, BOARD_SIZE):
 				gob = state.get_board()[i][j]
@@ -384,8 +398,12 @@ class AlphaBeta(object): # TODO: Complete
 						actions.append((0, (new_gob, (i,j))))
 
 				# Options for moving on board pieces
-				# TODO: Implement
+				for gob2 in on_board:
+					if gob == gob2 or gob.get_size() >= gob2.get_size():
+						continue
+					actions.append(1, (state.get_gob_pos(gob2), state.get_gob_pos(gob2)))
 
+		print actions
 		return actions
 
 	def result_state(self, state, action):
@@ -495,5 +513,5 @@ def make_move(move, player, board):
 	return valid
 
 if __name__ == '__main__':
-	gobby('h2', 4, 20, True)
+	gobby('hr', 4, 20, True)
 
