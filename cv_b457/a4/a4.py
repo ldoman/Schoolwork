@@ -15,35 +15,6 @@ import random
 import scipy.ndimage as ndi
 from skimage import feature
 
-# Problem 1.1 - canny edge detection
-def p1_1():
-	im = Image.open('line_original.png').convert('L')
-	ar_im = array(im)
-
-	# Compute the Canny filter for two values of sigma
-	edges1 = feature.canny(ar_im)
-	edges2 = feature.canny(ar_im, sigma=3)
-
-	# display results
-	fig, (ax1, ax2, ax3) = subplots(nrows=1, ncols=3, figsize=(8, 3),
-		                                sharex=True, sharey=True)
-
-	ax1.imshow(ar_im, cmap=plt.cm.gray)
-	ax1.axis('off')
-	ax1.set_title('Default image', fontsize=20)
-
-	ax2.imshow(edges1, cmap=plt.cm.gray)
-	ax2.axis('off')
-	ax2.set_title('Canny filter, $\sigma=1$', fontsize=20)
-
-	ax3.imshow(edges2, cmap=plt.cm.gray)
-	ax3.axis('off')
-	ax3.set_title('Canny filter, $\sigma=3$', fontsize=20)
-
-	fig.tight_layout()
-
-	show()
-
 def hough_transform(im, theta, d):
 	"""	Performs Hough Tranform on passed image.
 
@@ -75,15 +46,65 @@ def hough_transform(im, theta, d):
 	print max(d_values)
 	return h_bin
 
+# Problem 1.1 - canny edge detection
+def p1_1():
+	im = Image.open('line_original.png').convert('L')
+	ar_im = array(im)
 
-# Problem 1.2
+	# Compute the Canny filter for two values of sigma
+	edges1 = feature.canny(ar_im)
+	edges2 = feature.canny(ar_im, sigma=3)
+
+	# display results
+	fig, (ax1, ax2, ax3) = subplots(nrows=1, ncols=3, figsize=(8, 3),
+		                                sharex=True, sharey=True)
+
+	ax1.imshow(ar_im, cmap=plt.cm.gray)
+	ax1.axis('off')
+	ax1.set_title('Default image', fontsize=20)
+
+	ax2.imshow(edges1, cmap=plt.cm.gray)
+	ax2.axis('off')
+	ax2.set_title('Canny filter, $\sigma=1$', fontsize=20)
+
+	ax3.imshow(edges2, cmap=plt.cm.gray)
+	ax3.axis('off')
+	ax3.set_title('Canny filter, $\sigma=3$', fontsize=20)
+
+	fig.tight_layout()
+
+	show()
+
+# Problem 1.2 - hough transform
 def p1_2():
 	im = Image.open('line_original.png').convert('L')
 	ar_im = array(im)
 	h_bin = hough_transform(ar_im, 360, 600)
+	h_bin = ndi.rotate(h_bin, 90, mode='constant') # Displays better in landscape
+	imshow(h_bin, cmap='gray')
+	show()
+
+# Problem 1.3 - hough transform with different bin size
+def p1_3():
+	im = Image.open('line_original.png').convert('L')
+	ar_im = array(im)
+	h_bin = hough_transform(ar_im, 120, 400)
 
 	h_bin = ndi.rotate(h_bin, 90, mode='constant')
 	imshow(h_bin, cmap='gray')
+	show()
+
+# Problem 1.4 - Find peaks in Hough Transform
+def p1_4():
+	im = Image.open('line_original.png').convert('L')
+	ar_im = array(im)
+	h_bin = hough_transform(ar_im, 120, 400)
+	h_bin = ndi.rotate(h_bin, 90, mode='constant')
+	
+	coordinates = feature.peak_local_max(h_bin, min_distance=23)
+
+	imshow(h_bin, cmap=plt.cm.gray)
+	plot(coordinates[:, 1], coordinates[:, 0], 'r.')
 	show()
 
 # Problem 1
@@ -107,7 +128,8 @@ def p1():
 	show()
 
 if __name__ == '__main__':
-	#im = Image.open('zebra.jpg').convert('L')
 	#p1_1()
-	p1_2()
+	#p1_2()
+	#p1_3()
+	p1_4()
 
