@@ -1,5 +1,5 @@
 """
-B457 Assignment 4
+B457 Assignment 5
 """
 
 __author__ = "Luke Doman"
@@ -30,7 +30,7 @@ def hough_transform(im, theta, d):
 	canny_im = feature.canny(im)
 	size_y = len(im)
 	size_x = len(im[0])
-	h_bin = np.zeros(shape=(d, theta), dtype = int)
+	
 	d_values = []
 
 	for y in range (0, size_y):
@@ -109,7 +109,7 @@ def euclidean_dist(f1, f2):
 
 	dist = 0
 	for i in range(0, len(f1)):
-		dist = dist + (f1[i]-f2[i])**2 # TODO: Check
+		dist = dist + math.pow((f1[i]-f2[i]), 2)
 
 	dist = sqrt(dist)
 	return dist
@@ -199,35 +199,63 @@ def p1_5(ar_im):
 	show()
 
 
+def get_features(im, display = False):
+	"""
+	Take an image and runs the opencv orb function to find the features
+
+	Args:
+		img (cv2 image): Image to run on
+
+	Returns:
+		Vector of vectors for features
+	"""
+	# Initiate STAR detector
+	orb = cv2.ORB()
+
+	# find the keypoints with ORB
+	kp = orb.detect(img,None)
+
+	# compute the descriptors with ORB
+	kp, des = orb.compute(img, kp)
+
+	if display:
+		img2 = cv2.drawKeypoints(img,kp,color=(0,255,0), flags=0)
+		plt.imshow(img2),plt.show()
+
+	return des
+
+def generate_dist_matrix(fv1, fv2):
+	"""
+	Generate dist matrix for feature vectors of 2 images
+
+	Args:
+		fv1(Vector): Vector of features form im1
+		f2(Vector): Vector of features form im2
+
+	Returns:
+		2-D Matrix of Euclidean dist of each feature to another
+	"""
+	size_fv1 = len(fv1)
+	size_fv2 = len(fv2)
+	mat = np.zeros(shape=(size_fv1, size_fv2), dtype = int)
+
+	for i in range(0, size_fv1):
+		for j in range(0, size_fv2):
+			dist = euclidean_dist(fv1[i],fv2[j])
+			mat[i][j] = dist
+			#print dist
+
+	return mat
+
 if __name__ == '__main__':
 	#im = Image.open('line_original.png').convert('L')
 	img = cv2.imread('box.png')
-	# Initiate STAR detector
-	orb = cv2.ORB()
-
-	# find the keypoints with ORB
-	kp = orb.detect(img,None)
-
-	# compute the descriptors with ORB
-	kp, des = orb.compute(img, kp)
-
-	# draw only keypoints location,not size and orientation
-	img2 = cv2.drawKeypoints(img,kp,color=(0,255,0), flags=0)
-	plt.imshow(img2),plt.show()
-
+	fv1 = get_features(img)
 	img = cv2.imread('box_in_scene.png')
-	# Initiate STAR detector
-	orb = cv2.ORB()
+	fv2 = get_features(img)
 
-	# find the keypoints with ORB
-	kp = orb.detect(img,None)
+	dist_mat = generate_dist_matrix(fv1, fv2)
 
-	# compute the descriptors with ORB
-	kp, des = orb.compute(img, kp)
-
-	# draw only keypoints location,not size and orientation
-	img2 = cv2.drawKeypoints(img,kp,color=(0,255,0), flags=0)
-	plt.imshow(img2),plt.show()
-
-
+	print dist_mat
+	print min(dist_mat[0])
 
