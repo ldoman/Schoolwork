@@ -81,10 +81,57 @@ class NaiveBayes(Classifier):
             
     def reset(self, parameters):
         self.resetparams(parameters)
-        # TODO: set up required variables for learning
-        
-    # TODO: implement learn and predict functions                  
-            
+        self.weights = None
+        self.means = []
+        self.stds = []
+
+    def learner_ones(self, Xtrain, ytrain):
+        self.weights = np.ones(len(Xtrain[0]))
+        self.means = np.zeros(len(Xtrain[0]))
+        self.stds = np.zeros(len(Xtrain[0]))
+        for j in range(0, len(Xtrain[0])):
+            self.means[j] = np.mean(Xtrain[:,j])
+            self.stds[j] = np.std(Xtrain[:,j])
+
+        for i in range(Xtrain.shape[0]):
+            for j in range(0, len(Xtrain[0])):
+                exp = np.exp(-(np.power(Xtrain[i][j]-self.means[j],2)/(2*np.power(self.stds[j],2))))
+                p = (1 / (np.sqrt(2*np.pi) * self.stds[j])) * exp
+                self.weights[j] = self.weights[j] * p
+
+    def learner(self, Xtrain, ytrain):
+        self.weights = np.ones(len(Xtrain[0]))
+        self.weights[-1] = 0
+        self.means = np.zeros(len(Xtrain[0])-1)
+        self.stds = np.zeros(len(Xtrain[0])-1)
+        for j in range(0, len(Xtrain[0])-1):
+            self.means[j] = np.mean(Xtrain[:,j])
+            self.stds[j] = np.std(Xtrain[:,j])
+
+        for i in range(Xtrain.shape[0]):
+            for j in range(0, len(Xtrain[0])-1):
+                exp = np.exp(-(np.power(Xtrain[i][j]-self.means[j],2)/(2*np.power(self.stds[j],2))))
+                p = (1 / (np.sqrt(2*np.pi) * self.stds[j])) * exp
+                self.weights[j] = self.weights[j] * p
+
+    def learn(self, Xtrain, ytrain):
+        """
+        Router for calling correct learner function
+        """
+        if self.params['usecolumnones'] is True:
+            self.learner_ones(Xtrain, ytrain)
+        else:
+            self.learner(Xtrain, ytrain)
+
+    def predict(self, Xtest):# TODO fix
+        ytest = np.dot(Xtest, self.weights)
+        print '\n\n'        
+        print self.weights
+        print ytest
+        ytest[ytest > 0] = 1     
+        ytest[ytest < 0] = 0    
+        return ytest
+
 class LogitReg(Classifier):
 
     def __init__( self, parameters={} ):
@@ -95,6 +142,7 @@ class LogitReg(Classifier):
     def reset(self, parameters):
         self.resetparams(parameters)
         self.weights = None
+        self.step_size = .05
         if self.params['regularizer'] is 'l1':
             self.regularizer = (utils.l1, utils.dl1)
         elif self.params['regularizer'] is 'l2':
@@ -102,7 +150,30 @@ class LogitReg(Classifier):
         else:
             self.regularizer = (lambda w: 0, lambda w: np.zeros(w.shape,))
      
-    # TODO: implement learn and predict functions                  
+    def learn(self, Xtrain, ytrain):
+        self.weights = np.ones(len(Xtrain[0]))
+        xvec = np.dot(Xtrain, self.weights)
+        p = utils.sigmoid(np.dot(Xtrain, self.weights))  #(500*9) * (9*1) = 500*1
+        P = np.diagflat(p)
+
+        for j in range(500):
+            for i in range(Xtrain.shape[0]):
+                xvec = np.dot(Xtrain[i], self.weights)  #(1*9) * (9*1) = 500*1
+                delta = np.divide((2*ytrain[i]-1)*np.sqrt(np.square(xvec)+1)-xvec,np.square(xvec)+1)
+                delta = np.dot(Xtrain[i].T,delta)
+                first_term = np.divide((2*ytrain[i]-1)*xvec - np.sqrt(np.square(xvec)+1)-xvec,np.power(np.square(xvec)+1,3/2))
+                second_term = 2*xvec*np.divide((2*ytrain[i]-1)*np.sqrt(np.square(xvec)+1)-xvec,np.square(np.square(xvec)+1))
+                hessian = np.dot(Xtrain[i].T,Xtrain[i])*(first_term-second_term)
+                self.weights = self.weights + self.step_size * delta/hessian #(500*9) * (500*1) = (9*1)
+                #print self.weights
+
+
+    def predict(self, Xtest):
+        # print self.weights
+        ytest = utils.sigmoid(np.dot(Xtest, self.weights))
+        ytest[ytest >= 0.5] = 1     
+        ytest[ytest < 0.5] = 0    
+        return ytest          
            
 
 class NeuralNet(Classifier):
