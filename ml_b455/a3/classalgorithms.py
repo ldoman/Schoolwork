@@ -82,8 +82,38 @@ class NaiveBayes(Classifier):
     def reset(self, parameters):
         self.resetparams(parameters)
         self.weights = None
-        self.means = []
-        self.stds = []
+        self.c0_means = []
+        self.c0_stds = []
+        self.c1_means = []
+        self.c1_stds = []
+
+    def calc_vars(self, X):
+        """ Calcuates the mean and std dev for the different classes. 
+        We only need ot do this once per dataset.
+        """
+        class0 = []
+        class1 =[]
+        c0m = []
+        c1m = []
+        c0s = []
+        c1s = []
+        
+        for i in range(X.shape[0]):
+            if X[-1] == 0:
+                class0.append(X[i])
+            else:
+                class1.append(X[i])
+
+        class0 = array(class0)
+        class1 = array(class1)
+
+        for j in range(0, len(Xtrain[0])):
+            c0m = np.mean(class0)
+            c1m = np.mean(class1)
+            c0s = np.std(class0)
+            c1s = np.std(class1)
+
+        return c0m, c1m, c0s, c1s
 
     def learner_ones(self, Xtrain, ytrain):
         self.weights = np.ones(len(Xtrain[0]))
@@ -104,15 +134,21 @@ class NaiveBayes(Classifier):
         self.weights[-1] = 0
         self.means = np.zeros(len(Xtrain[0])-1)
         self.stds = np.zeros(len(Xtrain[0])-1)
+        ps = []
         for j in range(0, len(Xtrain[0])-1):
             self.means[j] = np.mean(Xtrain[:,j])
             self.stds[j] = np.std(Xtrain[:,j])
 
         for i in range(Xtrain.shape[0]):
+            #print self.weights
             for j in range(0, len(Xtrain[0])-1):
                 exp = np.exp(-(np.power(Xtrain[i][j]-self.means[j],2)/(2*np.power(self.stds[j],2))))
-                p = (1 / (np.sqrt(2*np.pi) * self.stds[j])) * exp
+                p = (1 / (np.sqrt(2*np.pi * np.power(self.stds[j], 2)))) * exp
+                ps.append(p)
                 self.weights[j] = self.weights[j] * p
+        print '\n\n'
+        print max(ps)
+        print min(ps)
 
     def learn(self, Xtrain, ytrain):
         """
@@ -125,8 +161,9 @@ class NaiveBayes(Classifier):
 
     def predict(self, Xtest):# TODO fix
         ytest = np.dot(Xtest, self.weights)
-        print '\n\n'        
+        print '\n\n'
         print self.weights
+        print Xtest
         print ytest
         ytest[ytest > 0] = 1     
         ytest[ytest < 0] = 0    

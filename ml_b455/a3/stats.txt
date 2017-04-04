@@ -1,0 +1,42 @@
+DEFAULT
+
+Average error for Random: 49.736 +- 0.183560344301
+Best parameters for Naive Bayes: {'usecolumnones': False}
+Average error for Naive Bayes: 49.902 +- 0.276339646088
+Best parameters for Linear Regression: {'regwgt': 0.0}
+Average error for Linear Regression: 24.804 +- 0.126484781693
+Best parameters for Logistic Regression: {'regwgt': 0.01, 'regularizer': 'None'}
+Average error for Logistic Regression: 49.76 +- 0.232568269547
+Best parameters for Neural Network: {'nh': 16, 'transfer': 'sigmoid', 'epochs': 100, 'stepsize': 0.01}
+Average error for Neural Network: 49.808 +- 0.233344380691
+Best parameters for Naive Bayes Ones: {'usecolumnones': True}
+Average error for Naive Bayes Ones: 49.714 +- 0.2398841387
+
+
+
+Logistic
+
+Average error for Random: 49.842 +- 0.176169236815
+Best parameters for Naive Bayes: {'usecolumnones': False}
+Average error for Naive Bayes: 50.07 +- 0.17133009076
+Best parameters for Linear Regression: {'regwgt': 0.0}
+Average error for Linear Regression: 24.184 +- 0.279367857851
+Best parameters for Logistic Regression: {'regwgt': 0.0, 'regularizer': 'None'}
+Average error for Logistic Regression: 27.562 +- 0.736952915728
+Best parameters for Neural Network: {'nh': 16, 'transfer': 'sigmoid', 'epochs': 100, 'stepsize': 0.01}
+Average error for Neural Network: 50.0 +- 0.207672819599
+Best parameters for Naive Bayes Ones: {'usecolumnones': True}
+Average error for Naive Bayes Ones: 49.658 +- 0.151220368998
+
+Bayes
+
+Best parameters for Random: {}
+Average error for Random: 49.4533333333 +- 0.0682044855699
+Best parameters for Naive Bayes: {'usecolumnones': False}
+Average error for Naive Bayes: 53.9066666667 +- 0.184350712462
+Best parameters for Neural Network: {'nh': 4, 'transfer': 'sigmoid', 'epochs': 100, 'stepsize': 0.01}
+Average error for Neural Network: 49.7266666667 +- 0.440639266252
+Best parameters for Naive Bayes Ones: {'usecolumnones': True}
+Average error for Naive Bayes Ones: 100.0 +- 0.0
+Best parameters for Linear Regression: {'regwgt': 0.0}
+Average error for Linear Regression: 25.0133333333 +- 0.274765893619
