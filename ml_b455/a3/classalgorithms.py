@@ -167,7 +167,7 @@ class LogitReg(Classifier):
     def reset(self, parameters):
         self.resetparams(parameters)
         self.weights = None
-        self.step_size = .05
+        self.step_size = .05 # Using fixed step size for simplicity
         if self.params['regularizer'] is 'l1':
             self.regularizer = (utils.l1, utils.dl1)
         elif self.params['regularizer'] is 'l2':
@@ -176,17 +176,20 @@ class LogitReg(Classifier):
             self.regularizer = (lambda w: 0, lambda w: np.zeros(w.shape,))
      
     def learn(self, Xtrain, ytrain):
+        """
+        Logistic Regression with stochastic optimization. Based on notes
+        pages 71-77, and algorithm provided on page 63.
+        """
         self.weights = np.ones(len(Xtrain[0]))
-
-        for j in range(20):
+        for j in range(20): # Running until convergence takes a while...
             for i in range(Xtrain.shape[0]):
-                xvec = np.dot(Xtrain[i], self.weights)
-                delta = np.divide((2*ytrain[i]-1)*np.sqrt(np.square(xvec)+1)-xvec,np.square(xvec)+1)
+                xtw = np.dot(Xtrain[i], self.weights)
+                delta = np.divide((2*ytrain[i]-1)*np.sqrt(np.square(xtw)+1)-xtw,np.square(xtw)+1)
                 delta = np.dot(Xtrain[i].T,delta)
-                first_term = np.divide((2*ytrain[i]-1)*xvec - np.sqrt(np.square(xvec)+1)-xvec,np.power(np.square(xvec)+1,3/2))
-                second_term = 2*xvec*np.divide((2*ytrain[i]-1)*np.sqrt(np.square(xvec)+1)-xvec,np.square(np.square(xvec)+1))
-                hessian = np.dot(Xtrain[i].T,Xtrain[i])*(first_term-second_term)
-                self.weights = self.weights + self.step_size * delta/hessian
+                d1 = np.divide((2*ytrain[i]-1)*xtw - np.sqrt(np.square(xtw)+1)-xtw,np.power(np.square(xtw)+1,3/2))
+                d2 = 2*xtw*np.divide((2*ytrain[i]-1)*np.sqrt(np.square(xtw)+1)-xtw,np.square(np.square(xtw)+1))
+                hess = np.dot(Xtrain[i].T,Xtrain[i])*(d1-d2)
+                self.weights = self.weights + self.step_size * delta/hess
 
     def predict(self, Xtest):
         # print self.weights
