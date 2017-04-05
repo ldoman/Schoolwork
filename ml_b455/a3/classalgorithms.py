@@ -1,6 +1,7 @@
 from __future__ import division  # floating point division
 import numpy as np
 import utilities as utils
+from scipy.cluster.vq import kmeans
 
 class Classifier:
     """
@@ -99,7 +100,7 @@ class NaiveBayes(Classifier):
         c0s = np.zeros(len(Xtrain[0]))
         c1s = np.zeros(len(Xtrain[0]))
         
-        for i in range(Xtrain.shape[0]):
+        for i in range(0, len(Xtrain)):
             if ytrain[i] == 0:
                 class0.append(Xtrain[i])
             else:
@@ -167,7 +168,7 @@ class LogitReg(Classifier):
     def reset(self, parameters):
         self.resetparams(parameters)
         self.weights = None
-        self.step_size = .05 # Using fixed step size for simplicity
+        self.step_size = .1 # Using fixed step size for simplicity
         if self.params['regularizer'] is 'l1':
             self.regularizer = (utils.l1, utils.dl1)
         elif self.params['regularizer'] is 'l2':
@@ -192,7 +193,6 @@ class LogitReg(Classifier):
                 self.weights = self.weights + self.step_size * delta/hess
 
     def predict(self, Xtest):
-        # print self.weights
         ytest = utils.sigmoid(np.dot(Xtest, self.weights))
         ytest[ytest >= 0.5] = 1     
         ytest[ytest < 0.5] = 0    
@@ -220,8 +220,19 @@ class NeuralNet(Classifier):
         self.wo = None
         
     # TODO: implement learn and predict functions                  
+    def learn(self, Xtrain, ytrain):
+        """ Incrementally update neural network using stochastic gradient descent """        
+        for reps in range(2):#self.reps):
+            for samp in range(Xtrain.shape[0]):
+                self.update(Xtrain[samp,:],ytrain[samp])
 
-    
+    def update(self, inp, out):
+        """ This function needs to be implemented """    
+        #(ah,ao)=self._evaluate(inp,out)
+        #delta= (-(out/ao)+ ((1-out)/(1-ao)))* ao*(1-ao)
+        #deriv1=delta*ah.T
+        # deriv2=delta*()
+
     def _evaluate(self, inputs):
         """ 
         Returns the output of the current neural network for the given input
@@ -238,6 +249,36 @@ class NeuralNet(Classifier):
         
         return (ah, ao)
 
-                
-           
-    
+class KernelLogitReg(LogitReg, object):
+
+    def __init__( self, parameters={} ):
+        # Default: no regularization
+        self.params = {'regwgt': 0.0, 'regularizer': 'None'}
+        self.reset(parameters)
+        self.k = 9 # TODO: Verify
+
+    def learn(self, Xtrain, ytrain):
+        """
+        Implementation based on notes pages 82-83.
+        """
+        centroids,var = kmeans(Xtrain, self.k)
+
+        sigmas = np.zeros(len(Xtrain[0]))
+        for i in range(0, len(Xtrain[0])):
+            sigmas[i] = np.std(Xtrain[:,i])**2
+
+        phi = np.zeros(shape=(len(Xtrain),len(Xtrain[0])))
+        for i in range(Xtrain.shape[0]):
+            for j in range(0, len(Xtrain[0])):
+                phi[i][j] = np.exp(-(np.square(Xtrain[i][j] - centroids[j][j])/(2 * sigmas[j])))
+
+        print phi
+
+        super(KernelLogitReg, self).learn(phi, ytrain)
+        
+
+
+
+
+
+

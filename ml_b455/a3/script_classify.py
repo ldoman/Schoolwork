@@ -29,6 +29,7 @@ if __name__ == '__main__':
                  'Naive Bayes Ones': algs.NaiveBayes({'usecolumnones': True}),
                  'Linear Regression': algs.LinearRegressionClass(),
                  'Logistic Regression': algs.LogitReg(),
+                 'Kernel Logistic Regression': algs.KernelLogitReg(),
                  'Neural Network': algs.NeuralNet({'epochs': 100})
                 }
     numalgs = len(classalgs)
