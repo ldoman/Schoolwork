@@ -235,14 +235,14 @@ class LogitReg(Classifier):
         of notes, and the algorithm provided on page 63.
         """
         self.weights = np.ones(len(Xtrain[0]))
-        for j in range(50): # Running until convergence takes a while...
-            for i in range(Xtrain.shape[0]):
-                xtw = np.dot(Xtrain[i], self.weights)
-                delta = np.divide((2*ytrain[i]-1)*np.sqrt(np.square(xtw)+1)-xtw,np.square(xtw)+1)
-                delta = np.dot(Xtrain[i].T,delta)
-                d1 = np.divide((2*ytrain[i]-1)*xtw - np.sqrt(np.square(xtw)+1)-xtw,np.power(np.square(xtw)+1,3/2))
-                d2 = 2*xtw*np.divide((2*ytrain[i]-1)*np.sqrt(np.square(xtw)+1)-xtw,np.square(np.square(xtw)+1))
-                hess = np.dot(Xtrain[i].T,Xtrain[i])*(d1-d2)
+        for n in range(100):
+            for j in range(Xtrain.shape[0]):
+                xtw = np.dot(Xtrain[j], self.weights)
+                delta = np.divide((2*ytrain[j]-1)*np.sqrt(np.square(xtw)+1)-xtw,np.square(xtw)+1)
+                delta = np.dot(Xtrain[j].T,delta)
+                d1 = np.divide((2*ytrain[j]-1)*xtw - np.sqrt(np.square(xtw)+1)-xtw,np.power(np.square(xtw)+1,3/2))
+                d2 = 2*xtw*np.divide((2*ytrain[j]-1)*np.sqrt(np.square(xtw)+1)-xtw,np.square(np.square(xtw)+1))
+                hess = np.dot(Xtrain[j].T,Xtrain[j])*(d1-d2)
                 self.weights = self.weights + self.step_size * delta/hess
 
     def predict(self, Xtest):
@@ -273,18 +273,7 @@ class NeuralNet(Classifier):
         self.wo = None
         
     # TODO: implement learn and predict functions                  
-    def learn(self, Xtrain, ytrain):
-        """ Incrementally update neural network using stochastic gradient descent """        
-        for reps in range(2):#self.reps):
-            for samp in range(Xtrain.shape[0]):
-                self.update(Xtrain[samp,:],ytrain[samp])
 
-    def update(self, inp, out):
-        """ This function needs to be implemented """    
-        #(ah,ao)=self._evaluate(inp,out)
-        #delta= (-(out/ao)+ ((1-out)/(1-ao)))* ao*(1-ao)
-        #deriv1=delta*ah.T
-        # deriv2=delta*()
 
     def _evaluate(self, inputs):
         """ 
@@ -343,11 +332,11 @@ class HammingKernel(LogitReg, object):
         Not sure if this is the correct approach since this was never covered.
         However, my logic will be as follows. First we cluster into the 2 groups 
         of salary, <=50k and >50k. Then we create a temp matrix where matrix[i][j]
-        is the Hamming distance to its respective centroids text. Now we can 
+        is the Hamming distance to its respective centroid's feature. Now we can 
         calulate sigmas for each feature column. We can also use these values
         in the nominator of our equation.
         """
-        # SciPy's kmeans doesn't actually work on a feature of multiple data types.
+        # SciPy's kmeans doesn't work on an array of multiple data types.
         centroids, var = kmeans(Xtrain, self.k)
         clusters, distance = vq(Xtrain,centroids)
         clust_0 = np.where(clusters == 0)[0]
