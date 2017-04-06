@@ -1,7 +1,60 @@
+"""
+Luke Doman
+B455 A3
+
+1a. 
+    Including the ones causes a 'divide by zero' warning, and the accuracy to be 0%. This
+    is because there is a standard deviation of zero for that feature, and since this is
+    on a Gaussian distribution that results in the denominator of the probability 
+    equalling 0.
+
+1b,1c: Please see implementation below.
+
+1d.
+  Naive Bayes:
+
+    This is a generative approach to prediction. Instead of learning P(Y|X) we are trying
+    to learn P(X|Y). We are given that each feature falls on a Gaussian distribution. Knowing
+    this, we can calculate the probability of each feature in the training data to predict
+    future data.
+
+    Average error for Naive Bayes: 54.2333333333 +- 0.0425136143771
+    Average error for Naive Bayes Ones: 100.0 +- 0.0
+
+  Logistic Regression:
+
+    Logistic regression is a linear predictive model, like linear regression, however it
+    differs by having a discrete outcome space vs a continous one.
+
+    Average error for Logistic Regression: 27.562 +- 0.736952915728
+
+  Neural Network:
+    A neural networks is a form of supervised representation learning. It consists of hidden 
+    layers, which increase the dimensionality of the input to better predict the output.
+
+    No results. Attempted but not completed.
+
+2a. 
+  Kernel Logistic Regression:
+
+    I receive an error only slightly better than random, which leads me to believe there is 
+    an error in the logic of my implentation somewhere. This should be able to do approximately 
+    as well as plain logistic regression.
+
+    Average error for Kernel Logistic Regression: 43.8066666667 +- 1.28465588417
+
+2b.
+  Hamming Kernel:
+    No results. I was unable to get the clustering working, but I believe the logic is sound.
+
+"""
+
+
 from __future__ import division  # floating point division
 import numpy as np
 import utilities as utils
-from scipy.cluster.vq import kmeans
+from scipy.cluster.vq import kmeans, vq
+from scipy.spatial.distance import hamming
 
 class Classifier:
     """
@@ -145,7 +198,7 @@ class NaiveBayes(Classifier):
     def learn(self, Xtrain, ytrain):
         """
         Router for calling correct learner function. Learner implementation 
-        based on notes pages 77-80.
+        based on pages 77-80 of notes.
         """
         if self.params['usecolumnones'] is True:
             self.learner_ones(Xtrain, ytrain)
@@ -178,11 +231,11 @@ class LogitReg(Classifier):
      
     def learn(self, Xtrain, ytrain):
         """
-        Logistic Regression with stochastic optimization. Based on notes
-        pages 71-77, and algorithm provided on page 63.
+        Logistic Regression with stochastic optimization. Based on pages 71-77
+        of notes, and the algorithm provided on page 63.
         """
         self.weights = np.ones(len(Xtrain[0]))
-        for j in range(20): # Running until convergence takes a while...
+        for j in range(50): # Running until convergence takes a while...
             for i in range(Xtrain.shape[0]):
                 xtw = np.dot(Xtrain[i], self.weights)
                 delta = np.divide((2*ytrain[i]-1)*np.sqrt(np.square(xtw)+1)-xtw,np.square(xtw)+1)
@@ -255,28 +308,67 @@ class KernelLogitReg(LogitReg, object):
         # Default: no regularization
         self.params = {'regwgt': 0.0, 'regularizer': 'None'}
         self.reset(parameters)
-        self.k = 9 # TODO: Verify
+        self.k = 2
 
     def learn(self, Xtrain, ytrain):
         """
         Implementation based on notes pages 82-83.
         """
-        centroids,var = kmeans(Xtrain, self.k)
+        centroids, var = kmeans(Xtrain, self.k)
+        clusters, distance = vq(Xtrain,centroids)
+        clust_0 = np.where(clusters == 0)[0]
+        clust_1 = np.where(clusters == 1)[0]
 
         sigmas = np.zeros(len(Xtrain[0]))
         for i in range(0, len(Xtrain[0])):
-            sigmas[i] = np.std(Xtrain[:,i])**2
+            sigmas[i] = np.square(np.std(Xtrain[:,i]))
 
         phi = np.zeros(shape=(len(Xtrain),len(Xtrain[0])))
         for i in range(Xtrain.shape[0]):
             for j in range(0, len(Xtrain[0])):
-                phi[i][j] = np.exp(-(np.square(Xtrain[i][j] - centroids[j][j])/(2 * sigmas[j])))
-
-        print phi
+                phi[i][j] = np.exp(-(np.square(Xtrain[i][j] - distance[i])/(2 * sigmas[j])))
 
         super(KernelLogitReg, self).learn(phi, ytrain)
         
+class HammingKernel(LogitReg, object):
 
+    def __init__( self, parameters={} ):
+        # Default: no regularization
+        self.params = {'regwgt': 0.0, 'regularizer': 'None'}
+        self.reset(parameters)
+        self.k = 2
+
+    def learn(self, Xtrain, ytrain):
+        """
+        Not sure if this is the correct approach since this was never covered.
+        However, my logic will be as follows. First we cluster into the 2 groups 
+        of salary, <=50k and >50k. Then we create a temp matrix where matrix[i][j]
+        is the Hamming distance to its respective centroids text. Now we can 
+        calulate sigmas for each feature column. We can also use these values
+        in the nominator of our equation.
+        """
+        # SciPy's kmeans doesn't actually work on a feature of multiple data types.
+        centroids, var = kmeans(Xtrain, self.k)
+        clusters, distance = vq(Xtrain,centroids)
+        clust_0 = np.where(clusters == 0)[0]
+        clust_1 = np.where(clusters == 1)[0]
+        
+        dists = np.zeros(shape=(len(Xtrain),len(Xtrain[0])))
+        for i in range(Xtrain.shape[0]):
+            for j in range(0, len(Xtrain[0])):
+                center = centroids[0] if i in clust_0 else centroids[1]
+                dists[i][j] = hamming(center[j], Xtrain[i][j])
+
+        sigmas = np.zeros(len(Xtrain[0]))
+        for i in range(0, len(Xtrain[0])):
+            sigmas[i] = np.square(np.std(dists[:,i]))
+
+        phi = np.zeros(shape=(len(Xtrain),len(Xtrain[0])))
+        for i in range(Xtrain.shape[0]):
+            for j in range(0, len(Xtrain[0])):
+                phi[i][j] = np.exp(-(np.square(dists[i][j])/(2 * sigmas[j])))
+
+        super(HammingKernel, self).learn(phi, ytrain)
 
 
 
