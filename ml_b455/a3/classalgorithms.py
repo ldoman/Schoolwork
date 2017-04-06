@@ -238,7 +238,7 @@ class LogitReg(Classifier):
         for n in range(100):
             for j in range(Xtrain.shape[0]):
                 xtw = np.dot(Xtrain[j], self.weights)
-                delta = np.divide((2 * ytrain[j] - 1) * np.sqrt(np.square(xtw) + 1) - xtw,np.square(xtw) + 1)
+                delta = np.divide((2 * ytrain[j] - 1) * np.sqrt(np.square(xtw) + 1) - xtw, np.square(xtw) + 1)
                 delta = np.dot(Xtrain[j].T, delta)
                 d1 = np.divide((2 * ytrain[j] - 1) * xtw - np.sqrt(np.square(xtw) + 1) - xtw, np.square(np.square(xtw) + 1))
                 d2 = 2 * xtw * np.divide((2 * ytrain[j] - 1) * np.sqrt(np.square(xtw) + 1) - xtw, np.square(np.square(xtw) + 1))

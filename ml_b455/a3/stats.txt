@@ -27,3 +27,8 @@ Average error for Naive Bayes: 54.2333333333 +- 0.0425136143771
 Best parameters for Naive Bayes Ones: {'usecolumnones': True}
 Average error for Naive Bayes Ones: 100.0 +- 0.0
 
+Kernel Logistic Regression
+
+Best parameters for Kernel Logistic Regression: {'regwgt': 0.0, 'regularizer': 'None'}
+Average error for Kernel Logistic Regression: 43.8066666667 +- 1.28465588417
+
