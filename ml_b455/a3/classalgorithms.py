@@ -178,7 +178,7 @@ class NaiveBayes(Classifier):
             for j in range(0, len(Xtrain[0])):
                 mean = c0_means[j] if ytrain[i] == 0 else c1_means[j]
                 std = c0_stds[j]**2 if ytrain[i] == 0 else c1_stds[j]**2
-                exp = np.exp(-(np.power(Xtrain[i][j]-mean,2)/(2*std)))
+                exp = np.exp(-(np.power(Xtrain[i][j] - mean, 2)/(2 * std)))
                 p = (1 / (np.sqrt(2 * np.pi * std))) * exp
                 self.weights[j] = self.weights[j] * p
 
@@ -191,7 +191,7 @@ class NaiveBayes(Classifier):
             for j in range(0, len(Xtrain[0])-1):
                 mean = c0_means[j] if ytrain[i] == 0 else c1_means[j]
                 std = c0_stds[j]**2 if ytrain[i] == 0 else c1_stds[j]**2
-                exp = np.exp(-(np.power(Xtrain[i][j]-mean,2)/(2*std)))
+                exp = np.exp(-(np.power(Xtrain[i][j] - mean, 2)/(2 * std)))
                 p = (1 / (np.sqrt(2 * np.pi * std))) * exp
                 self.weights[j] = self.weights[j] * p
 
@@ -238,11 +238,11 @@ class LogitReg(Classifier):
         for n in range(100):
             for j in range(Xtrain.shape[0]):
                 xtw = np.dot(Xtrain[j], self.weights)
-                delta = np.divide((2*ytrain[j]-1)*np.sqrt(np.square(xtw)+1)-xtw,np.square(xtw)+1)
-                delta = np.dot(Xtrain[j].T,delta)
-                d1 = np.divide((2*ytrain[j]-1)*xtw - np.sqrt(np.square(xtw)+1)-xtw,np.power(np.square(xtw)+1,3/2))
-                d2 = 2*xtw*np.divide((2*ytrain[j]-1)*np.sqrt(np.square(xtw)+1)-xtw,np.square(np.square(xtw)+1))
-                hess = np.dot(Xtrain[j].T,Xtrain[j])*(d1-d2)
+                delta = np.divide((2 * ytrain[j] - 1) * np.sqrt(np.square(xtw) + 1) - xtw,np.square(xtw) + 1)
+                delta = np.dot(Xtrain[j].T, delta)
+                d1 = np.divide((2 * ytrain[j] - 1) * xtw - np.sqrt(np.square(xtw) + 1) - xtw, np.power(np.square(xtw) + 1, 3/2))
+                d2 = 2 * xtw * np.divide((2 * ytrain[j] - 1) * np.sqrt(np.square(xtw) + 1) - xtw, np.square(np.square(xtw) + 1))
+                hess = np.dot(Xtrain[j].T, Xtrain[j]) * (d1-d2)
                 self.weights = self.weights + self.step_size * delta/hess
 
     def predict(self, Xtest):
