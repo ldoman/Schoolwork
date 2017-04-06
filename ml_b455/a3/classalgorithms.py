@@ -240,7 +240,7 @@ class LogitReg(Classifier):
                 xtw = np.dot(Xtrain[j], self.weights)
                 delta = np.divide((2 * ytrain[j] - 1) * np.sqrt(np.square(xtw) + 1) - xtw,np.square(xtw) + 1)
                 delta = np.dot(Xtrain[j].T, delta)
-                d1 = np.divide((2 * ytrain[j] - 1) * xtw - np.sqrt(np.square(xtw) + 1) - xtw, np.power(np.square(xtw) + 1, 3/2))
+                d1 = np.divide((2 * ytrain[j] - 1) * xtw - np.sqrt(np.square(xtw) + 1) - xtw, np.square(np.square(xtw) + 1))
                 d2 = 2 * xtw * np.divide((2 * ytrain[j] - 1) * np.sqrt(np.square(xtw) + 1) - xtw, np.square(np.square(xtw) + 1))
                 hess = np.dot(Xtrain[j].T, Xtrain[j]) * (d1-d2)
                 self.weights = self.weights + self.step_size * delta/hess
