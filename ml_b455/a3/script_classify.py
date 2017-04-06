@@ -30,6 +30,7 @@ if __name__ == '__main__':
                  'Linear Regression': algs.LinearRegressionClass(),
                  'Logistic Regression': algs.LogitReg(),
                  'Kernel Logistic Regression': algs.KernelLogitReg(),
+                 #'HammingKernel': algs.HammingKernel(),
                  'Neural Network': algs.NeuralNet({'epochs': 100})
                 }
     numalgs = len(classalgs)
