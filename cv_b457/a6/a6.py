@@ -1,5 +1,5 @@
 """
-B457 Assignment 5
+B457 Assignment 6
 """
 
 __author__ = "Luke Doman"
@@ -13,6 +13,7 @@ from pprint import pprint
 from pylab import *
 import random
 import scipy.ndimage as ndi
+from scipy.cluster.vq import *
 from skimage import feature
 import cv2
 
@@ -162,9 +163,34 @@ def display_homography(M, mask, img1, img2):
 
 	plt.imshow(img3, 'gray'),plt.show()
 
+# Problem 1.2
+def bag_of_words(im, k = 4):
+	"""
+	Clusters SIFT features of image into k clusters and visualizes them.
+
+	Args:
+		im (CV2 image): Image to get features of
+		k (int): Number of clusters
+	"""
+	kp, fv, coord = get_features(im, True)
+
+	features = array(fv, dtype = float)
+	centroids,variance = kmeans(features,k)
+	code,distance = vq(features,centroids)
+
+	shapes = ['*','r.','g.','b.','p.','o.']
+	figure()
+	for i in range(0, k):
+		ndx = where(code==i)[0]
+		plot(features[ndx,0],features[ndx,1],features[ndx,2],shapes[i])
+	plot(centroids[:,0],centroids[:,1],'go')
+	axis('off')
+	show()
+
 if __name__ == '__main__':
-	img1 = cv2.imread('box.png')
-	kp1, fv1, coord1 = get_features(img1, True)
+	im1 = cv2.imread('cluttered_desk.png')
+	bag_of_words(im1, 4)
+
 	img2 = cv2.imread('box_in_scene.png')
 	kp2, fv2, coord2 = get_features(img2, True)
 
