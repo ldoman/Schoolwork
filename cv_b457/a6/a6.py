@@ -7,6 +7,8 @@ __author__ = "Luke Doman"
 # Imports
 from math import sqrt
 from matplotlib import *
+import matplotlib.cm as cmx
+import matplotlib.colors as colors
 import numpy as np
 from PIL import Image
 from pprint import pprint
@@ -162,6 +164,18 @@ def display_homography(M, mask, img1, img2):
 	img3 = cv2.drawMatches(img1,kp1,img2,kp2,good,None,**draw_params)
 
 	plt.imshow(img3, 'gray'),plt.show()
+
+
+def get_cmap(N):
+    """
+	Returns a function that maps each index in 0, 1, ... N-1 to a distinct 
+    RGB color. From: http://stackoverflow.com/a/25628397
+	"""
+    color_norm  = colors.Normalize(vmin=0, vmax=N-1)
+    scalar_map = cmx.ScalarMappable(norm=color_norm, cmap='hsv') 
+    def map_index_to_rgb_color(index):
+        return scalar_map.to_rgba(index)
+    return map_index_to_rgb_color
 
 # Problem 1.2
 def bag_of_words(im, k = 4):
