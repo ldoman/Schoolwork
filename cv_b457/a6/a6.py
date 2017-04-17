@@ -292,7 +292,6 @@ def extract_all(dirs = data_dirs):
 
 def find_centers(sift_list, k = 200):
 	for i in range(0,100,10):
-		print i
 		fv = sift_list[i][1]#array(fv, dtype = float)
 		features = array(fv, dtype = float)
 		centroids,variance = kmeans(features,k)
