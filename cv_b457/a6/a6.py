@@ -5,11 +5,13 @@ B457 Assignment 6
 __author__ = "Luke Doman"
 
 # Imports
+import json
 from math import sqrt
 from matplotlib import *
 import matplotlib.cm as cmx
 import matplotlib.colors as colors
 import numpy as np
+import os
 from PIL import Image
 from pprint import pprint
 from pylab import *
@@ -18,6 +20,8 @@ import scipy.ndimage as ndi
 from scipy.cluster.vq import *
 from skimage import feature
 import cv2
+
+data_dirs = ['airplanes','camera','chair','crab','crocodile','elephant','headphone','pizza','soccer_ball','starfish']
 
 # P1.1 & P2.0
 def get_features(im, display = False):
@@ -265,10 +269,41 @@ def p1():
 	#display_homography(M, mask, img1, img2)# My CV2 is missing draw matches?
 	#print M
 
+# Problem 2.1
+def extract_all(dirs = data_dirs):
+	"""
+	Extracts SIFT features from every image in our data directory.
+
+	Args:
+		dirs (List of strings): Every subdir we wish to explore
+
+	Returns:
+		100-D list of features for each image 
+	"""
+	features = []
+	for d in dirs:
+		dir_path = os.path.join(os.getcwd(), 'Data', d)
+		for fp in os.listdir(dir_path):
+			im = cv2.imread('cluttered_desk.png')
+			kp, des, pts = get_features(im)
+			features.append([kp,des,pts])
+
+	return features
+
+def find_centers(sift_list, k = 200):
+	for i in range(0,100,10):
+		print i
+		fv = sift_list[i][1]#array(fv, dtype = float)
+		features = array(fv, dtype = float)
+		centroids,variance = kmeans(features,k)
+		code,distance = vq(features,centroids)
+		print len(centroids)
+
 # Problem 2 execution
 def p2():
+	features = extract_all()
+	find_centers(features)
 	
-
 
 
 if __name__ == '__main__':
