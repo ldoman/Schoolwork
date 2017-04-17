@@ -141,27 +141,28 @@ def homography(src_pts, dst_pts):
 	between SIFT features of 2 images.
 	"""
 	M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
-	print M
-	#print mask
+	return M, mask
 
 # P2.2
 def display_homography(M, mask, img1, img2):
 	"""
 	Visualize matching features found with homography. Code from provided link.
 	"""
+	img1 = np.array(img1)
+	img2 = np.array(img2)
 	matchesMask = mask.ravel().tolist()
 
 	h,w = img1.shape
 	pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
 	dst = cv2.perspectiveTransform(pts,M)
 
-	img2 = cv2.polylines(img2,[np.int32(dst)],True,255,3, cv2.LINE_AA)
+	img2 = cv2.polylines(img2,[np.int32(dst)],True,255,3, cv2.CV_AA)
 	draw_params = dict(matchColor = (0,255,0), # draw matches in green color
 		               singlePointColor = None,
 		               matchesMask = matchesMask, # draw only inliers
 		               flags = 2)
 
-	img3 = cv2.drawMatches(img1,kp1,img2,kp2,good,None,**draw_params)
+	img3 = cv2.drawMatches(img1,kp1,img2,kp2,good,None,**draw_params)# Errors
 
 	plt.imshow(img3, 'gray'),plt.show()
 
@@ -178,42 +179,101 @@ def get_cmap(N):
     return map_index_to_rgb_color
 
 # Problem 1.2
-def bag_of_words(im, k = 4):
+def bag_of_words(im, k = 4, display = False):
 	"""
 	Clusters SIFT features of image into k clusters and visualizes them.
 
 	Args:
 		im (CV2 image): Image to get features of
 		k (int): Number of clusters
+		display (bool): Whether to show plots or not
+
+	Returns:
+		List of k clusters and coordinates of the points
 	"""
-	kp, fv, coord = get_features(im, True)
+	kp, fv, coord = get_features(im, display)
 
 	features = array(fv, dtype = float)
 	centroids,variance = kmeans(features,k)
 	code,distance = vq(features,centroids)
 
-	shapes = ['*','r.','g.','b.','p.','o.']
+	shapes = ['*','r.','g.','b.','p.','o']
 	figure()
 	for i in range(0, k):
 		ndx = where(code==i)[0]
-		plot(features[ndx,0],features[ndx,1],features[ndx,2],shapes[i])
-	plot(centroids[:,0],centroids[:,1],'go')
-	axis('off')
+		x_points = coord[ndx,0][:,0]
+		y_points = coord[ndx,0][:,1]
+		plot(x_points, y_points, shapes[len(shapes)%(i+1)-1])
+
+	if display:
+		axis('off')
+		imshow(im)
+		show()
+
+	return code, coord[:,0]
+
+def appendimages(im1,im2):
+	# select the image with the fewest rows and fill in enough empty rows
+	im1 = np.array(im1)
+	im2 = np.array(im2)
+	rows1 = im1.shape[0]
+	rows2 = im2.shape[0]
+	if rows1 < rows2:
+		im1 = np.concatenate((im1,np.zeros((rows2-rows1,im1.shape[1]))),axis=0)
+	elif rows1 > rows2:
+		im2 = np.concatenate((im2,np.zeros((rows1-rows2,im2.shape[1]))),axis=0)
+	# if none of these cases they are equal, no filling needed.
+	return np.concatenate((im1,im2), axis=1)
+
+# Problem 1.3 - Code given by prof
+def plot_matches(im1,im2,locs1,locs2):
+	im1 = np.array(im1)
+	im2 = np.array(im2)
+	im3 = appendimages(im1,im2)
+	addr = im1.shape[0]
+	addc = im1.shape[1]#+90
+	plt.imshow(im3)
+	cols1 = im1.shape[1]
+
+	for i in range(len(locs1)):
+		rows = [locs1[i][0], locs2[i][0]]
+		cos = [locs1[i][1], locs2[i][1]+addc]
+		plt.plot(cos, rows, 'k-', lw=1)
 	show()
 
-if __name__ == '__main__':
+# Problem 1 execution
+def p1():
+	# P1.0-2
 	im1 = cv2.imread('cluttered_desk.png')
-	bag_of_words(im1, 4)
+	img1 = Image.open('cluttered_desk.png').convert('L')
+	clust1, coord1 = bag_of_words(im1, 20)#, True)
 
-	img2 = cv2.imread('box_in_scene.png')
-	kp2, fv2, coord2 = get_features(img2, True)
+	im2 = cv2.imread('elephant_model.png')
+	img2 = Image.open('elephant_model.png').convert('L')
+	clust2, coord2 = bag_of_words(im2, 20)
 
-	dist_mat = generate_dist_matrix(fv1, fv2)
+	im3 = cv2.imread('staple_remover_model.png')
+	img3 = Image.open('staple_remover_model.png').convert('L')
+	clust3, coord3 = bag_of_words(im3, 20)
+
+	# P 1.3
+	plot_matches(img1, img2, coord1, coord2)
+	plot_matches(img1, img3, coord1, coord3)
+
+	# P 1.4 TODO
+	M, mask = homography(coord1, coord2)
+	#display_homography(M, mask, img1, img2)# My CV2 is missing draw matches?
+	#print M
+
+# Problem 2 execution
+def p2():
 	
-	matches = find_matching_features(dist_mat, 550)
 
-	bf_matcher(kp1, kp2, fv1, fv2)
 
-	#M, mask = homography(coord1, coord2) # Can't get the types correct
 
-	#display_homography(M, mask, img1, img2)
+if __name__ == '__main__':
+	#p1()
+	p2()
+
+
+
