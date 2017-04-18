@@ -74,68 +74,6 @@ def euclidean_dist(f1, f2):
 	dist = sqrt(dist)
 	return dist
 
-def generate_dist_matrix(fv1, fv2):
-	"""
-	Generate dist matrix for feature vectors of 2 images
-
-	Args:
-		fv1(Vector): Vector of features form im1
-		f2(Vector): Vector of features form im2
-
-	Returns:
-		2-D Matrix of Euclidean dist of each feature to another
-	"""
-	size_fv1 = len(fv1)
-	size_fv2 = len(fv2)
-	mat = np.zeros(shape=(size_fv1, size_fv2), dtype = int)
-
-	for i in range(0, size_fv1):
-		for j in range(0, size_fv2):
-			dist = euclidean_dist(fv1[i],fv2[j])
-			mat[i][j] = dist
-			#print dist
-
-	return mat
-
-def find_matching_features(mat, thres):
-	"""
-	Finds features in both images whose distance is less
-	than specified threshold.
-
-	Args:
-		mat (Matrix): Matrix where each value is the ith and jth features distance from another
-		thres (int): Threshold used to find matches
-
-	Returns:
-		List of matches as tuples in form of (ith feature, jth feature)
-	"""
-	matches = []
-
-	for i in range(0, len(mat)):
-		for j in range(0, len(mat[0])):
-			if mat[i][j] < thres:
-				matches.append((i, j))
-
-	return matches
-
-def bf_matcher(kp1, kp2, des1, des2):
-	"""
-	OpenCV's feature matcher
-	"""
-	# create BFMatcher object
-	bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
-
-	# Match descriptors.
-	matches = bf.match(des1,des2)
-
-	# Sort them in the order of their distance.
-	matches = sorted(matches, key = lambda x:x.distance)
-
-	# Draw first 10 matches.
-	img3 = cv2.drawMatches(img1,kp1,img2,kp2,matches[:10], flags=2)
-
-	plt.imshow(img3),plt.show()
-
 def homography(src_pts, dst_pts):
 	"""
 	Uses OpenCV's findHomography function to find homography
@@ -165,18 +103,6 @@ def display_homography(M, mask, img1, img2):
 	img3 = cv2.drawMatches(img1,kp1,img2,kp2,good,None,**draw_params)# Errors
 
 	plt.imshow(img3, 'gray'),plt.show()
-
-
-def get_cmap(N):
-    """
-	Returns a function that maps each index in 0, 1, ... N-1 to a distinct 
-    RGB color. From: http://stackoverflow.com/a/25628397
-	"""
-    color_norm  = colors.Normalize(vmin=0, vmax=N-1)
-    scalar_map = cmx.ScalarMappable(norm=color_norm, cmap='hsv') 
-    def map_index_to_rgb_color(index):
-        return scalar_map.to_rgba(index)
-    return map_index_to_rgb_color
 
 # Problem 1.2
 def bag_of_words(im, k = 4, display = False):
@@ -334,6 +260,9 @@ def generate_hist(features, centers, json_file = None):
 		with open(os.path.join(os.getcwd(), json_file), 'r') as f:
 			json_dict = json.load(f)
 			hists = json_dict['histograms']
+			features = json_dict['features']
+			centers = json_dict['centroids']
+
 	else:
 		fv_len = len(features)
 		cen_len = len(centers)
@@ -360,6 +289,7 @@ def im_query(im, centers, im_map, json_file = json_cache):
 	with open(os.path.join(os.getcwd(), json_file), 'r') as f:
 		json_dict = json.load(f)
 		hists = json_dict['histograms']
+		centers = json_dict['centroids']
 
 	# Calculate hist for passed image
 	im_hist = [0 for f  in range(len(centers))]
@@ -397,45 +327,77 @@ def generate_json(features, centroids, hists, json_file = json_cache):
 	"""
 	Generates a json file with all the calculated data saved there.
 	"""
-	json_dict = {'features': None,
-				 'centroids': None,
+	# Make vars serializable
+	f = []
+	for im in features:
+		f.append(im[1].tolist())
+	c = centroids.tolist()
+
+	json_dict = {'features': f,
+				 'centroids': c,
 				 'histograms': hists}
 
 	with open(os.path.join(os.getcwd(), json_file), 'w') as f:
-		json.dump(json_dict, f, indent=4)
+		json.dump(json_dict, f)
 
 # Problem 2 execution
 def p2():
 	im_map = im_hist_map()
 
 	# P 2.1
-	features = extract_all()
+	#features = extract_all()
 
 	# P 2.2
-	centroids = find_centers(features)
+	#centroids = find_centers(features)
 
 	# P 2.3
-	hists = generate_hist(features, centroids, json_cache)
-	#generate_json(features, centroids, hists)# Run once
+	#hists = generate_hist(features, centroids)
+	hists = generate_hist(None, None, json_cache) # Cache version
+	#generate_json(features, centroids, hists) # NOTE: Only run once
 
 	# 2.4 - I'm not wasting either of our time by saving 50 images. 
-	# Match results will follow each query in text in the order
-	# specified below
-
+	# Match results are in descending order of similarity below
 	for d in data_dirs:
-		print d
+		print '\nImage matches for: %s/image_0001.jpg' % (d)
 		fpath = os.path.join(os.getcwd(), 'Data', d, 'image_0001.jpg')
 		im = cv2.imread(fpath)
 		imf = get_features(im)[1]
-		im_query(imf, centroids, im_map)
+		#im_query(imf, centroids, im_map)
+		im_query(imf, None, im_map) # Cache version
 
+	"""
+	Image matches for: airplanes/image_0001.jpg
+	['Data/airplanes/image_0001.jpg', 'Data/crab/image_0008.jpg', 'Data/elephant/image_0007.jpg', 'Data/elephant/image_0001.jpg', 'Data/crab/image_0007.jpg']
 
+	Image matches for: camera/image_0001.jpg
+	['Data/camera/image_0001.jpg', 'Data/pizza/image_0006.jpg', 'Data/chair/image_0002.jpg', 'Data/starfish/image_0008.jpg', 'Data/headphone/image_0004.jpg']
 
+	Image matches for: chair/image_0001.jpg
+	['Data/chair/image_0001.jpg', 'Data/crocodile/image_0005.jpg', 'Data/chair/image_0008.jpg', 'Data/starfish/image_0008.jpg', 'Data/headphone/image_0005.jpg']
 
+	Image matches for: crab/image_0001.jpg
+	['Data/crab/image_0001.jpg', 'Data/airplanes/image_0008.jpg', 'Data/crocodile/image_0006.jpg', 'Data/pizza/image_0009.jpg', 'Data/chair/image_0004.jpg']
+
+	Image matches for: crocodile/image_0001.jpg
+	['Data/crocodile/image_0001.jpg', 'Data/elephant/image_0001.jpg', 'Data/airplanes/image_0009.jpg', 'Data/starfish/image_0004.jpg', 'Data/airplanes/image_0006.jpg']
+
+	Image matches for: elephant/image_0001.jpg
+	['Data/elephant/image_0001.jpg', 'Data/elephant/image_0005.jpg', 'Data/camera/image_0007.jpg', 'Data/airplanes/image_0006.jpg', 'Data/crab/image_0005.jpg']
+
+	Image matches for: headphone/image_0001.jpg
+	['Data/headphone/image_0001.jpg', 'Data/starfish/image_0005.jpg', 'Data/elephant/image_0005.jpg', 'Data/soccer_ball/image_0003.jpg', 'Data/elephant/image_0008.jpg']
+
+	Image matches for: pizza/image_0001.jpg
+	['Data/pizza/image_0001.jpg', 'Data/elephant/image_0007.jpg', 'Data/pizza/image_0010.jpg', 'Data/pizza/image_0008.jpg', 'Data/airplanes/image_0005.jpg']
+
+	Image matches for: soccer_ball/image_0001.jpg
+	['Data/soccer_ball/image_0001.jpg', 'Data/soccer_ball/image_0003.jpg', 'Data/camera/image_0002.jpg', 'Data/soccer_ball/image_0008.jpg', 'Data/pizza/image_0001.jpg']
+
+	Image matches for: starfish/image_0001.jpg
+	['Data/starfish/image_0001.jpg', 'Data/elephant/image_0002.jpg', 'Data/crab/image_0005.jpg', 'Data/crocodile/image_0004.jpg', 'Data/starfish/image_0003.jpg']
+	"""
 
 if __name__ == '__main__':
 	#p1()
 	p2()
-
-
 
