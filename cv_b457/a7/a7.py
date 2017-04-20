@@ -98,7 +98,7 @@ def extract_all(dirs = data_dirs, json_file = None):
 		for d in dirs:
 			dir_path = os.path.join(os.getcwd(), 'Data', d)
 			count = 0
-			for fp in os.listdir(dir_path):
+			for fp in sorted(os.listdir(dir_path)):
 				if count > 32:
 					break
 				im = cv2.imread(os.path.join(dir_path, fp))
@@ -153,6 +153,7 @@ def generate_hist(features, centers, json_file = None):
 
 	else:
 		fv_len = len(features)
+		print fv_len
 		cen_len = len(centers)
 		hists = [[0 for f in range(cen_len)] for im in range(fv_len)]
 		for i in range(fv_len):
@@ -195,7 +196,6 @@ def im_query(im, centers, im_map, json_file = json_cache):
 	for i in range(len(hists)):
 		dists.append((i, euclidean_dist(im_hist, hists[i])))
 	dists.sort(key=lambda tup: tup[1])
-
 	ret = [im_map[t[0]] for t in dists[:5]]
 	return ret
 
@@ -207,10 +207,11 @@ def im_hist_map(dirs = data_dirs):
 	for d in dirs:
 		dir_path = os.path.join(os.getcwd(), 'Data', d)
 		count = 0
-		for fp in os.listdir(dir_path):
+		for fp in sorted(os.listdir(dir_path)):
 			if count > 32:
 				break
 			fnames.append(os.path.join('Data', d, fp))
+			count += 1
 
 	return fnames
 
@@ -234,7 +235,6 @@ def generate_json(features, centroids, hists, json_file = json_cache):
 # Problem 1 execution
 def p1():
 	im_map = im_hist_map()
-
 	# P 1.1
 	#features = extract_all()
 
@@ -247,25 +247,59 @@ def p1():
 	#generate_json(features, centroids, hists) # NOTE: Only run once
 
 	# P 1.4 
+	all_matches = []
+	count = 0
 	with open(output_file, 'w') as out:
 		for d in data_dirs:
 			count = 0
-			for fp in os.listdir(os.path.join(os.getcwd(), 'Data', d)):
+			for fp in sorted(os.listdir(os.path.join(os.getcwd(), 'Data', d))):
 				count += 1
 				if count < 32:
 					continue
-				if count > 33:# Test
+				if count > 100:# Test
 					break
-				print count
 				fpath = os.path.join(os.getcwd(), 'Data', d, fp)
-				#out.write('')# New line
 				out.write('\n\nImage matches for: %s/%s' % (d,fp))
 				im = cv2.imread(fpath)
 				imf = get_features(im)[1]
 				#im_query(imf, centroids, im_map)
 				matches = im_query(imf, None, im_map) # Cache version
+				all_matches.append((d, matches))
 				out.write(str(matches))
 
+	# Evaluate performance
+	print "%d images processed" % ((count-32)*len(data_dirs))
+	class_perf = {}
+	for class_name, matches in all_matches:
+		if class_name not in class_perf:
+			class_perf[class_name] = (0,0)
+		classes = [m.split('/')[1] for m in matches]
+		class_weights = np.array([.5, .4, .3, .3, .2])
+		class_values = np.array([1 if c == class_name else 0 for c in classes])
+		p = np.dot(class_values.T, class_weights)
+		if p > .49:
+			class_perf[class_name] = (class_perf[class_name][0] + 1, class_perf[class_name][1] + 1)
+		else:
+			class_perf[class_name] = (class_perf[class_name][0], class_perf[class_name][1] + 1)
+
+	for class_name, stats in class_perf.iteritems():
+		print "%s classification accuracy: %d%s" % (class_name, ((float(stats[0])/float(stats[1])))*100, '%')
+
+	""" Results
+
+	540 images processed
+	soccer_ball classification accuracy: 63%
+	starfish classification accuracy: 27%
+	airplanes classification accuracy: 31%
+	headphone classification accuracy: 72%
+	crocodile classification accuracy: 31%
+	camera classification accuracy: 26%
+	crab classification accuracy: 35%
+	elephant classification accuracy: 51%
+	chair classification accuracy: 35%
+	pizza classification accuracy: 63%
+
+	"""
 
 if __name__ == '__main__':
 	p1()
