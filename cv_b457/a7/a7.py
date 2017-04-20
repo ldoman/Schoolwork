@@ -22,6 +22,7 @@ from scipy.cluster.vq import *
 from skimage import feature
 from sys import maxint
 
+TRAIN_SIZE = 32
 json_cache = 'a7_cache.json'
 output_file = 'a7_results.txt'
 data_dirs = ['airplanes','camera','chair','crab','crocodile','elephant','headphone','pizza','soccer_ball','starfish']
@@ -99,7 +100,7 @@ def extract_all(dirs = data_dirs, json_file = None):
 			dir_path = os.path.join(os.getcwd(), 'Data', d)
 			count = 0
 			for fp in sorted(os.listdir(dir_path)):
-				if count > 32:
+				if count > TRAIN_SIZE:
 					break
 				im = cv2.imread(os.path.join(dir_path, fp))
 				kp, des, pts = get_features(im)
@@ -121,7 +122,7 @@ def find_centers(sift_list, k = 200, json_file = None):
 			centroids = np.array(json_dict['centroids'])
 	else:
 		fv = []
-		for i in range(0,100,10):
+		for i in range(0,len(sift_list),16):# TODO: Hard coded step size of 16 to get 2 of each image categories
 			for feature in sift_list[i][1]:
 				fv.append(feature)
 		features = array(fv, dtype = float)
@@ -153,7 +154,6 @@ def generate_hist(features, centers, json_file = None):
 
 	else:
 		fv_len = len(features)
-		print fv_len
 		cen_len = len(centers)
 		hists = [[0 for f in range(cen_len)] for im in range(fv_len)]
 		for i in range(fv_len):
@@ -208,7 +208,7 @@ def im_hist_map(dirs = data_dirs):
 		dir_path = os.path.join(os.getcwd(), 'Data', d)
 		count = 0
 		for fp in sorted(os.listdir(dir_path)):
-			if count > 32:
+			if count > TRAIN_SIZE:
 				break
 			fnames.append(os.path.join('Data', d, fp))
 			count += 1
@@ -245,16 +245,17 @@ def p1():
 	#hists = generate_hist(features, centroids)
 	hists = generate_hist(None, None, json_cache) # Cache version
 	#generate_json(features, centroids, hists) # NOTE: Only run once
-
+	#print "done"
 	# P 1.4 
 	all_matches = []
-	count = 0
+	total_count = 0
 	with open(output_file, 'w') as out:
 		for d in data_dirs:
 			count = 0
 			for fp in sorted(os.listdir(os.path.join(os.getcwd(), 'Data', d))):
 				count += 1
-				if count < 32:
+				total_count += 1
+				if count < TRAIN_SIZE:
 					continue
 				if count > 100:# Test
 					break
@@ -268,7 +269,7 @@ def p1():
 				out.write(str(matches))
 
 	# Evaluate performance
-	print "%d images processed" % ((count-32)*len(data_dirs))
+	print "%d images processed" % (total_count)
 	class_perf = {}
 	for class_name, matches in all_matches:
 		if class_name not in class_perf:
@@ -286,19 +287,19 @@ def p1():
 		print "%s classification accuracy: %d%s" % (class_name, ((float(stats[0])/float(stats[1])))*100, '%')
 
 	""" Results
+	TRAIN_SIZE = 32
 
-	540 images processed
-	soccer_ball classification accuracy: 63%
-	starfish classification accuracy: 27%
-	airplanes classification accuracy: 31%
-	headphone classification accuracy: 72%
-	crocodile classification accuracy: 31%
-	camera classification accuracy: 26%
-	crab classification accuracy: 35%
-	elephant classification accuracy: 51%
-	chair classification accuracy: 35%
-	pizza classification accuracy: 63%
-
+	645 images processed
+	soccer_ball classification accuracy: 60%
+	starfish classification accuracy: 29%
+	airplanes classification accuracy: 37%
+	headphone classification accuracy: 63%
+	crocodile classification accuracy: 47%
+	camera classification accuracy: 31%
+	crab classification accuracy: 42%
+	elephant classification accuracy: 48%
+	chair classification accuracy: 32%
+	pizza classification accuracy: 59%
 	"""
 
 if __name__ == '__main__':
