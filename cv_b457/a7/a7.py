@@ -1,5 +1,19 @@
 """
 B457 Assignment 7
+
+Results:
+
+645 images processed
+soccer_ball classification accuracy: 60%
+starfish classification accuracy: 29%
+airplanes classification accuracy: 37%
+headphone classification accuracy: 63%
+crocodile classification accuracy: 47%
+camera classification accuracy: 31%
+crab classification accuracy: 42%
+elephant classification accuracy: 48%
+chair classification accuracy: 32%
+pizza classification accuracy: 59%
 """
 
 __author__ = "Luke Doman"
@@ -285,22 +299,6 @@ def p1():
 
 	for class_name, stats in class_perf.iteritems():
 		print "%s classification accuracy: %d%s" % (class_name, ((float(stats[0])/float(stats[1])))*100, '%')
-
-	""" Results
-	TRAIN_SIZE = 32
-
-	645 images processed
-	soccer_ball classification accuracy: 60%
-	starfish classification accuracy: 29%
-	airplanes classification accuracy: 37%
-	headphone classification accuracy: 63%
-	crocodile classification accuracy: 47%
-	camera classification accuracy: 31%
-	crab classification accuracy: 42%
-	elephant classification accuracy: 48%
-	chair classification accuracy: 32%
-	pizza classification accuracy: 59%
-	"""
 
 if __name__ == '__main__':
 	p1()
