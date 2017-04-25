@@ -15,8 +15,6 @@ import random
 from sklearn import svm, neural_network, linear_model
 
 # Constants
-TRAIN_SIZE = 40
-TEST_SIZE = 90
 data_csv = 'skylake_oc_results.csv'
 test_cpus = ['6600', '6600k', '6700', '6700k']
 mb_map = {'asus': 0, 'asrock': 1, 'evga': 2, 'gigabyte': 3, 'msi': 4, 'na': 5}
@@ -71,11 +69,11 @@ def geterror(predictions, ytest):
 if __name__ == '__main__':
     trainsize = 40
     testsize = 90
-    numruns = 1
+    numruns = 10
 
-    regressionalgs = {'Random': algs.Regressor(),
-                'Mean': algs.MeanPredictor(),
-             }
+    regressionalgs = {'SVM': svm.SVR(),
+                'NN': neural_network.MLPRegressor(),
+                'Linear': linear_model.LinearRegression()}
     numalgs = len(regressionalgs)
 
     # Enable the best parameter to be selected, to enable comparison
@@ -98,11 +96,13 @@ if __name__ == '__main__':
         for p in range(numparams):
             params = parameters[p]
             for learnername, learner in regressionalgs.items():
+                """
                 # Reset learner for new parameters
                 learner.reset(params)
                 print ('Running learner = ' + learnername + ' on parameters ' + str(learner.getparams()))
                 # Train model
-                learner.learn(trainset[0], trainset[1])
+                """
+                learner.fit(trainset[0], trainset[1])
                 # Test model
                 predictions = learner.predict(testset[0])
                 error = geterror(testset[1], predictions)
@@ -122,7 +122,7 @@ if __name__ == '__main__':
                 bestparams = p
 
         # Extract best parameters
-        learner.reset(parameters[bestparams])
+        #learner.reset(parameters[bestparams])
         #print ('Best parameters for ' + learnername + ': ' + str(learner.getparams()))
         print ('Average error for ' + learnername + ': ' + str(besterror))
 
