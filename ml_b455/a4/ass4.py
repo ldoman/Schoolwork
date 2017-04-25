@@ -6,32 +6,22 @@ __author__ = "Luke Doman"
 
 # Imports
 import csv
-import cv2
-import json
+from dataloader import splitdataset
 from math import sqrt
-from matplotlib import *
-import matplotlib.cm as cmx
-import matplotlib.colors as colors
+#from matplotlib import *
 import numpy as np
 import os
-from PIL import Image
 from pprint import pprint
-from pylab import *
 import random
-import scipy.ndimage as ndi
-from scipy.cluster.vq import *
-from skimage import feature
-from sys import maxint
-
+import regressionalgorithms as algs
+from utilities import *
 
 # Constants
+TRAIN_SIZE = 40
+TEST_SIZE = 90
 data_csv = 'skylake_oc_results.csv'
 test_cpus = ['6600', '6600k', '6700', '6700k']
-#mb_brands = ['asus', 'asrock', 'evga', 'gigabyte', 'msi']
 mb_map = {'asus': 0, 'asrock': 1, 'evga': 2, 'gigabyte': 3, 'msi': 4, 'na': 5}
-TRAIN_SIZE = 40
-json_cache = 'a7_cache.json'
-output_file = 'a7_results.txt'
 
 def euclidean_dist(f1, f2):
 	"""
@@ -116,61 +106,6 @@ def f_query(f, centers):
 	ret = [im_map[t[0]] for t in dists[:5]]
 	return ret
 
-# Problem 1 execution
-def p1():
-	im_map = im_hist_map()
-	# P 1.1
-	#features = extract_all()
-
-	# P 1.2
-	#centroids = find_centers(features)
-
-	# P 1.3
-	#hists = generate_hist(features, centroids)
-	hists = generate_hist(None, None, json_cache) # Cache version
-	#generate_json(features, centroids, hists) # NOTE: Only run once
-	#print "done"
-	# P 1.4 
-	all_matches = []
-	total_count = 0
-	with open(output_file, 'w') as out:
-		for d in data_dirs:
-			count = 0
-			for fp in sorted(os.listdir(os.path.join(os.getcwd(), 'Data', d))):
-				count += 1
-				total_count += 1
-				if count < TRAIN_SIZE:
-					continue
-				if count > 100:# Test
-					break
-				fpath = os.path.join(os.getcwd(), 'Data', d, fp)
-				out.write('\n\nImage matches for: %s/%s' % (d,fp))
-				im = cv2.imread(fpath)
-				imf = get_features(im)[1]
-				#im_query(imf, centroids, im_map)
-				matches = im_query(imf, None, im_map) # Cache version
-				all_matches.append((d, matches))
-				out.write(str(matches))
-
-	# Evaluate performance
-	print "%d images processed" % (total_count)
-	class_perf = {}
-	for class_name, matches in all_matches:
-		if class_name not in class_perf:
-			class_perf[class_name] = (0,0)
-		classes = [m.split('/')[1] for m in matches]
-		class_weights = np.array([.5, .4, .3, .3, .2])
-		class_values = np.array([1 if c == class_name else 0 for c in classes])
-		p = np.dot(class_values.T, class_weights)
-		if p > .49:
-			class_perf[class_name] = (class_perf[class_name][0] + 1, class_perf[class_name][1] + 1)
-		else:
-			class_perf[class_name] = (class_perf[class_name][0], class_perf[class_name][1] + 1)
-
-	for class_name, stats in class_perf.iteritems():
-		print "%s classification accuracy: %d%s" % (class_name, ((float(stats[0])/float(stats[1])))*100, '%')
-
-
 def parse_csv(file_path):
 	"""
 	Read csv, convert vals to appropriate data type, and return all features.
@@ -182,42 +117,106 @@ def parse_csv(file_path):
 		Numpy array of features (X), Numpy array of attained clockspeeds (Y)
 	"""
 	features = []
-	clocks = []
 
 	with open(file_path, 'r') as data:
-		csv_reader = csv.DictReader(data)    
+		csv_reader = csv.DictReader(data)   
 		for line in csv_reader:
 			if line['cpu'] not in test_cpus:
-				#print "%s not in test cpus" % line['cpu']
 				continue
 			bclk = float(line['bclk'])
 			mul = int(line['core_mult'])
 			core_freq = float(line['core_freq'])
 			cache_freq = float(line['cache_freq'])
 			vcore = float(line['vcore'])
-			fclk = float(line['fclk']) if line['fclk'] else 0# TODO
-			bat = 0#(line[''])
-			ram = int(line['ram'].split()[0]) if line['ram'] else 0# TODO
+			#bat = float(line['batch']) # Need much more data for this to be relevant
+			fclk = float(line['fclk']) if line['fclk'] else 1 # Default speeed
+			ram = int(line['ram'].split()[0]) if line['ram'] else 2000 # Mean ram speed
 			mb = mb_map[line['mb'].split()[0].lower()] if line['mb'].split()[0].lower() in mb_map else len(mb_map)
-			arr = np.array([bclk, mul, cache_freq, vcore, fclk, bat, ram, mb])
+			arr = np.array([bclk, mul, cache_freq, vcore, fclk, ram, mb, core_freq])
 			features.append(arr)
-			clocks.append(core_freq)
 
-	return np.array(features), np.array(clocks)
+	return np.array(features)
 
+def l2err(prediction,ytest):
+    """ l2 error (i.e., root-mean-squared-error) """
+    return np.linalg.norm(np.subtract(prediction,ytest))
 
+def l1err(prediction,ytest):
+    """ l1 error """
+    return np.linalg.norm(np.subtract(prediction,ytest),ord=1)
 
+def l2err_squared(prediction,ytest):
+    """ l2 error squared """
+    return np.square(np.linalg.norm(np.subtract(prediction,ytest)))
 
-
-
-
-
-
+def geterror(predictions, ytest):
+    # Can change this to other error values
+    return l2err(predictions,ytest)/ytest.shape[0]
 
 if __name__ == '__main__':
-	f = parse_csv(data_csv)
-	#centers = find_centers(f)
-	print f
+    trainsize = 40
+    testsize = 90
+    numruns = 1
+
+    regressionalgs = {'Random': algs.Regressor(),
+                'Mean': algs.MeanPredictor(),
+#                'FSLinearRegression5': algs.FSLinearRegression({'features': [1,2,3,4,5]}),
+                'FSLinearRegression50': algs.FSLinearRegression({'features': range(8)}),
+				#'FSLinearRegression75': algs.FSLinearRegression({'features': [random.randrange(0,385) for x in range(0,75)]}),
+#				'FSLinearRegression385': algs.FSLinearRegression({'features': range(385)}),
+                'RidgeLinearRegression': algs.RidgeLinearRegression(),
+#                'Lasso': algs.LassoRegression(),
+#                'BatchGradientDescent': algs.BatchGradientDescent(),
+#                'StochasticGradientDescent': algs.StochasticGradientDescent(),
+
+             }
+    numalgs = len(regressionalgs)
+
+    # Enable the best parameter to be selected, to enable comparison
+    # between algorithms with their best parameter settings
+    parameters = (
+        {'regwgt': 0.0},
+        {'regwgt': 0.01},
+        {'regwgt': 1.0},
+                      )
+    numparams = len(parameters)
+    
+    errors = {}
+    for learnername in regressionalgs:
+        errors[learnername] = np.zeros((numparams,numruns))
+
+    for r in range(numruns):
+        trainset, testset = splitdataset(parse_csv(data_csv), trainsize, testsize)
+        print(('Running on train={0} and test={1} samples for run {2}').format(trainset[0].shape[0], testset[0].shape[0],r))
+
+        for p in range(numparams):
+            params = parameters[p]
+            for learnername, learner in regressionalgs.items():
+                # Reset learner for new parameters
+                learner.reset(params)
+                print ('Running learner = ' + learnername + ' on parameters ' + str(learner.getparams()))
+                # Train model
+                learner.learn(trainset[0], trainset[1])
+                # Test model
+                predictions = learner.predict(testset[0])
+                error = geterror(testset[1], predictions)
+                print ('Error for ' + learnername + ': ' + str(error))
+                errors[learnername][p,r] = error
 
 
+    for learnername in regressionalgs:
+        besterror = np.mean(errors[learnername][0,:])
+        errs = errors[learnername]
+        #print ('Standard error for ' + learnername + ': ' + str(stdev(errs)/math.sqrt(len(errs)))) # TODO: Test
+        bestparams = 0
+        for p in range(numparams):
+            aveerror = np.mean(errors[learnername][p,:])
+            if aveerror < besterror:
+                besterror = aveerror
+                bestparams = p
+
+        # Extract best parameters
+        learner.reset(parameters[bestparams])
+        #print ('Best parameters for ' + learnername + ': ' + str(learner.getparams()))
+        print ('Average error for ' + learnername + ': ' + str(besterror))
 
