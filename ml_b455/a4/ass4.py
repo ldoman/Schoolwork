@@ -103,13 +103,13 @@ def f_query(f, centers):
 	"""
 	# Calculate hist for passed feature
 	im_hist = [0 for f  in range(len(centers))]
-		min_index = -1
-		min_dist = maxint
-		for j in range(len(centers)):
-			dist = euclidean_dist(feature, centers[j])
-			min_index = j if dist < min_dist else min_index
-			min_dist = dist if dist < min_dist else min_dist
-		im_hist[min_index] += 1
+	min_index = -1
+	min_dist = maxint
+	for j in range(len(centers)):
+		dist = euclidean_dist(feature, centers[j])
+		min_index = j if dist < min_dist else min_index
+		min_dist = dist if dist < min_dist else min_dist
+	im_hist[min_index] += 1
 
 	# Get dist between passed im and every other one
 	dists = []
@@ -199,8 +199,7 @@ def parse_csv(file_path):
 			fclk = float(line['fclk']) if line['fclk'] else 0# TODO
 			bat = 0#(line[''])
 			ram = int(line['ram'].split()[0]) if line['ram'] else 0# TODO
-			mb_ = line['mb'].split()[0].lower() if line['mb'].split()[0].lower() in mb_brands else 'na'
-			mb = mb_map[mb_]
+			mb = mb_map[line['mb'].split()[0].lower()] if line['mb'].split()[0].lower() in mb_map else len(mb_map)
 			arr = np.array([bclk, mul, core_freq, cache_freq, vcore, fclk, bat, ram, mb])
 			features.append(arr)
 
