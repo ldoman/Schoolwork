@@ -7,14 +7,12 @@ __author__ = "Luke Doman"
 # Imports
 import csv
 from dataloader import splitdataset
-from math import sqrt
 #from matplotlib import *
 import numpy as np
 import os
 from pprint import pprint
 import random
-import regressionalgorithms as algs
-from utilities import *
+from sklearn import svm, neural_network, linear_model
 
 # Constants
 TRAIN_SIZE = 40
@@ -22,89 +20,6 @@ TEST_SIZE = 90
 data_csv = 'skylake_oc_results.csv'
 test_cpus = ['6600', '6600k', '6700', '6700k']
 mb_map = {'asus': 0, 'asrock': 1, 'evga': 2, 'gigabyte': 3, 'msi': 4, 'na': 5}
-
-def euclidean_dist(f1, f2):
-	"""
-	Calculate Euclidean distance between 2 n-dimensional SIFT features
-
-	Args:
-		f1 (Vector): Feature 1
-		f2 (Vector): Feature 2
-
-	Returns:
-		Float
-	"""
-	dist = 0
-	for i in range(0, len(f1)):
-		dist = dist + math.pow((f1[i]-f2[i]), 2)
-
-	dist = sqrt(dist)
-	return dist
-
-def find_centers(features, k = 30):
-	"""
-	Add features from the  first of each different image type to an 
-	array to perfrom k-means on. Note: K-means doesn't return exactly
-	k clusters at high values.
-	"""
-	rand_ndx = np.random.rand(k)
-	fv = [features[int(v * len(features))] for v in rand_ndx]
-	#fv = [int(v * len(features)) for v in rand_ndx]
-	#print fv
-	features = array(fv, dtype = float)
-	centroids,variance = kmeans(features,k)
-	code,distance = vq(features,centroids)
-
-	return centroids
-
-def generate_hist(features, centers):
-	"""
-	Iterates over  every feature of every image and places 
-	in closest cluster center.
-
-	Args:
-		features (3d list): List of each image's features
-		centers (2d list): List of calculated cluster centers
-
-	Returns:
-		List of each image's histogram of features
-	"""
-	fv_len = len(features)
-	cen_len = len(centers)
-	hists = [[0 for f in range(cen_len)] for im in range(fv_len)]
-	for i in range(fv_len):
-		min_index = -1
-		min_dist = maxint
-		for j in range(cen_len):
-			dist = euclidean_dist(features[i], centers[j])
-			min_index = j if dist < min_dist else min_index
-			min_dist = dist if dist < min_dist else min_dist
-		hists[i][min_index] += 1
-
-	return hists
-
-# Problem 1.4
-def f_query(f, centers):
-	"""
-	Finds the best 5 matches for the given feature vector.
-	"""
-	# Calculate hist for passed feature
-	im_hist = [0 for f  in range(len(centers))]
-	min_index = -1
-	min_dist = maxint
-	for j in range(len(centers)):
-		dist = euclidean_dist(feature, centers[j])
-		min_index = j if dist < min_dist else min_index
-		min_dist = dist if dist < min_dist else min_dist
-	im_hist[min_index] += 1
-
-	# Get dist between passed im and every other one
-	dists = []
-	for i in range(len(hists)):
-		dists.append((i, euclidean_dist(im_hist, hists[i])))
-	dists.sort(key=lambda tup: tup[1])
-	ret = [im_map[t[0]] for t in dists[:5]]
-	return ret
 
 def parse_csv(file_path):
 	"""
@@ -160,15 +75,6 @@ if __name__ == '__main__':
 
     regressionalgs = {'Random': algs.Regressor(),
                 'Mean': algs.MeanPredictor(),
-#                'FSLinearRegression5': algs.FSLinearRegression({'features': [1,2,3,4,5]}),
-                'FSLinearRegression50': algs.FSLinearRegression({'features': range(8)}),
-				#'FSLinearRegression75': algs.FSLinearRegression({'features': [random.randrange(0,385) for x in range(0,75)]}),
-#				'FSLinearRegression385': algs.FSLinearRegression({'features': range(385)}),
-                'RidgeLinearRegression': algs.RidgeLinearRegression(),
-#                'Lasso': algs.LassoRegression(),
-#                'BatchGradientDescent': algs.BatchGradientDescent(),
-#                'StochasticGradientDescent': algs.StochasticGradientDescent(),
-
              }
     numalgs = len(regressionalgs)
 
