@@ -27,7 +27,7 @@ from sys import maxint
 # Constants
 data_csv = 'skylake_oc_results.csv'
 test_cpus = ['6600', '6600k', '6700', '6700k']
-mb_brands = ['asus', 'asrock', 'evga', 'gigabyte', 'msi']
+#mb_brands = ['asus', 'asrock', 'evga', 'gigabyte', 'msi']
 mb_map = {'asus': 0, 'asrock': 1, 'evga': 2, 'gigabyte': 3, 'msi': 4, 'na': 5}
 TRAIN_SIZE = 40
 json_cache = 'a7_cache.json'
@@ -44,9 +44,6 @@ def euclidean_dist(f1, f2):
 	Returns:
 		Float
 	"""
-	#if len(f1) != len(f2):
-		#print "SIFT features of different dimensionality. %d vs %d" % (len(f1),len(f2))
-
 	dist = 0
 	for i in range(0, len(f1)):
 		dist = dist + math.pow((f1[i]-f2[i]), 2)
