@@ -182,9 +182,11 @@ def parse_csv(file_path):
 		file_path (string): Path to csv to parse
 
 	Returns:
-		Numpy array of all feature arrays
+		Numpy array of features (X), Numpy array of attained clockspeeds (Y)
 	"""
 	features = []
+	clocks = []
+
 	with open(file_path, 'r') as data:
 		csv_reader = csv.DictReader(data)    
 		for line in csv_reader:
@@ -201,10 +203,11 @@ def parse_csv(file_path):
 			ram = int(line['ram'].split()[0]) if line['ram'] else 0# TODO
 			mb_ = line['mb'].split()[0].lower() if line['mb'].split()[0].lower() in mb_brands else 'na'
 			mb = mb_map[mb_]
-			arr = np.array([bclk, mul, core_freq, cache_freq, vcore, fclk, bat, ram, mb])
+			arr = np.array([bclk, mul, cache_freq, vcore, fclk, bat, ram, mb])
 			features.append(arr)
+			clocks.append(core_freq)
 
-	return np.array(features)
+	return np.array(features), np.array(clocks)
 
 
 
@@ -217,8 +220,8 @@ def parse_csv(file_path):
 
 if __name__ == '__main__':
 	f = parse_csv(data_csv)
-	centers = find_centers(f)
-	print centers
+	#centers = find_centers(f)
+	print f
 
 
 
