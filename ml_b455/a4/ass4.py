@@ -12,9 +12,11 @@ import numpy as np
 import os
 from pprint import pprint
 import random
+from scipy import stats
 from sklearn import svm, neural_network, linear_model
 
 # Constants
+
 data_csv = 'skylake_oc_results.csv'
 test_cpus = ['6600', '6600k', '6700', '6700k']
 mb_map = {'asus': 0, 'asrock': 1, 'evga': 2, 'gigabyte': 3, 'msi': 4, 'na': 5}
@@ -54,75 +56,55 @@ def l2err(prediction,ytest):
     """ l2 error (i.e., root-mean-squared-error) """
     return np.linalg.norm(np.subtract(prediction,ytest))
 
-def l1err(prediction,ytest):
-    """ l1 error """
-    return np.linalg.norm(np.subtract(prediction,ytest),ord=1)
-
-def l2err_squared(prediction,ytest):
-    """ l2 error squared """
-    return np.square(np.linalg.norm(np.subtract(prediction,ytest)))
-
 def geterror(predictions, ytest):
     # Can change this to other error values
     return l2err(predictions,ytest)/ytest.shape[0]
 
 if __name__ == '__main__':
-    trainsize = 40
-    testsize = 90
-    numruns = 10
+    trainsize = 55
+    testsize = 95
+    numruns = 50
 
     regressionalgs = {'SVM': svm.SVR(),
                 'NN': neural_network.MLPRegressor(),
                 'Linear': linear_model.LinearRegression()}
     numalgs = len(regressionalgs)
 
-    # Enable the best parameter to be selected, to enable comparison
-    # between algorithms with their best parameter settings
-    parameters = (
-        {'regwgt': 0.0},
-        {'regwgt': 0.01},
-        {'regwgt': 1.0},
-                      )
-    numparams = len(parameters)
-    
+    preds = {'SVM': [],
+                'NN': [],
+                'Linear': []}
+
     errors = {}
     for learnername in regressionalgs:
-        errors[learnername] = np.zeros((numparams,numruns))
+        errors[learnername] = np.zeros(numruns)
 
     for r in range(numruns):
         trainset, testset = splitdataset(parse_csv(data_csv), trainsize, testsize)
         print(('Running on train={0} and test={1} samples for run {2}').format(trainset[0].shape[0], testset[0].shape[0],r))
-
-        for p in range(numparams):
-            params = parameters[p]
-            for learnername, learner in regressionalgs.items():
-                """
-                # Reset learner for new parameters
-                learner.reset(params)
-                print ('Running learner = ' + learnername + ' on parameters ' + str(learner.getparams()))
-                # Train model
-                """
-                learner.fit(trainset[0], trainset[1])
-                # Test model
-                predictions = learner.predict(testset[0])
-                error = geterror(testset[1], predictions)
-                print ('Error for ' + learnername + ': ' + str(error))
-                errors[learnername][p,r] = error
-
+        for learnername, learner in regressionalgs.items():
+            learner.fit(trainset[0], trainset[1])
+            predictions = learner.predict(testset[0])
+            preds[learnername].append(predictions)
+            error = geterror(testset[1], predictions)
+            print ('Error for ' + learnername + ': ' + str(error))
+            errors[learnername][r] = error
 
     for learnername in regressionalgs:
-        besterror = np.mean(errors[learnername][0,:])
+        besterror = np.mean(errors[learnername][:])
         errs = errors[learnername]
-        #print ('Standard error for ' + learnername + ': ' + str(stdev(errs)/math.sqrt(len(errs)))) # TODO: Test
-        bestparams = 0
-        for p in range(numparams):
-            aveerror = np.mean(errors[learnername][p,:])
-            if aveerror < besterror:
-                besterror = aveerror
-                bestparams = p
-
-        # Extract best parameters
-        #learner.reset(parameters[bestparams])
-        #print ('Best parameters for ' + learnername + ': ' + str(learner.getparams()))
         print ('Average error for ' + learnername + ': ' + str(besterror))
+
+    # Compare algorithm results. Using pairwise t-test from scipy based documentation at:
+    # https://docs.scipy.org/doc/scipy-0.19.0/reference/generated/scipy.stats.ttest_rel.html
+    np.random.seed(12345678)
+    for learner, pred in preds.iteritems():
+        for learner2, pred2 in preds.iteritems():
+            if learner == learner2:
+                continue
+            pvals = []
+            for i in range(len(pred)):
+                pvals.append(stats.ttest_rel(pred[i], pred2[i])[1])
+            ttest = stats.ttest_rel(pred[0], pred2[0])
+            avg = np.mean(np.array(pvals))
+            print "Mean p-value of similarity between %s and %s: %f" % (learner, learner2, avg)
 
