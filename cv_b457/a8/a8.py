@@ -250,15 +250,29 @@ def draw_flow(im,flow,step=16):
 		cv2.circle(vis,(x1,y1),1,(0,255,0), -1)
 	return vis
 
+def get_flows(src_dir, display = False):
+	out_dir = os.path.join(src_dir + '_flow', '')
+	if not os.path.exists(out_dir):
+		os.makedirs(out_dir)
+	img_paths = [os.path.join(src_dir, f) for f in sorted(os.listdir(src_dir))]
+	prev_im = cv2.imread(img_paths[0], 0)
+	for i in range(len(img_paths)):
+		#print img_paths[i]
+		im = cv2.imread(img_paths[i], 0)
+		flow = cv2.calcOpticalFlowFarneback(prev_im,im,0.5,1,3,15,3,5,1)
+		prev_im = im
+		cv2.imwrite(out_dir+'flow_'+str(i)+'.jpg', draw_flow(im,flow))
+		if display:
+			imshow(draw_flow(im,flow))
+			show()
+
 # Problem 1 execution
 def p1():
-	img_paths = [os.path.join(os.getcwd(), 'dog', f) for f in sorted(os.listdir('dog'))]
-	prev_im = cv2.imread(img_paths[0], 0)
-	for fp in img_paths:
-		im = cv2.imread(fp, 0)
-		flow = cv2.calcOpticalFlowFarneback(prev_im,im,None,0.5,3,15,3,5,1.2,0)
-		prev_im = im
-		cv2.imshow('Optical flow',draw_flow(im,flow))
+	doggo_dir = os.path.join(os.getcwd(), 'dog')
+	#get_flows(doggo_dir)
+
+	thomas_dir = os.path.join(os.getcwd(), 'jpl_thomas')
+	get_flows(thomas_dir)
 
 
 # Problem 1 execution
