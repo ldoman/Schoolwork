@@ -19,13 +19,10 @@ from pylab import *
 import random
 import scipy.ndimage as ndi
 from scipy.cluster.vq import *
-from skimage import feature
+from skimage.io import imread
 from sys import maxint
 
-TRAIN_SIZE = 32
-json_cache = 'a7_cache.json'
-output_file = 'a7_results.txt'
-data_dirs = ['airplanes','camera','chair','crab','crocodile','elephant','headphone','pizza','soccer_ball','starfish']
+data_dir = '/home/ldoman/code/cv_b457/a8/jpl'
 
 # Useful A5 items
 def get_features(im, display = False):
@@ -77,7 +74,7 @@ def euclidean_dist(f1, f2):
 	return dist
 
 # Problem 1.1
-def extract_all(dirs = data_dirs, json_file = None):
+def extract_all(dirs = data_dir, json_file = None):
 	"""
 	Extracts SIFT features from every image in our data directory.
 	Can load features previously extracted from a json file.
@@ -170,7 +167,7 @@ def generate_hist(features, centers, json_file = None):
 	return hists
 
 # Problem 1.4
-def im_query(im, centers, im_map, json_file = json_cache):
+def im_query(im, centers, im_map, json_file = None):
 	"""
 	Finds the best 5 matches for the given image.
 	"""
@@ -199,7 +196,7 @@ def im_query(im, centers, im_map, json_file = json_cache):
 	ret = [im_map[t[0]] for t in dists[:5]]
 	return ret
 
-def im_hist_map(dirs = data_dirs):
+def im_hist_map(dirs = data_dir):
 	"""
 	Generates map between index of histogram nad filename.
 	"""
@@ -215,7 +212,7 @@ def im_hist_map(dirs = data_dirs):
 
 	return fnames
 
-def generate_json(features, centroids, hists, json_file = json_cache):
+def generate_json(features, centroids, hists, json_file = None):
 	"""
 	Generates a json file with all the calculated data saved there.
 	"""
@@ -250,6 +247,7 @@ def draw_flow(im,flow,step=16):
 		cv2.circle(vis,(x1,y1),1,(0,255,0), -1)
 	return vis
 
+# Problem 0.1
 def get_flows(src_dir, display = False):
 	out_dir = os.path.join(src_dir + '_flow', '')
 	if not os.path.exists(out_dir):
@@ -265,6 +263,41 @@ def get_flows(src_dir, display = False):
 		if display:
 			imshow(draw_flow(im,flow))
 			show()
+
+def xyt(sequence_dir):
+	fnames = os.listdir(sequence_dir)
+	label = int(sequence_dir.split('_')[1])
+	frames = sorted(fnames, key = lambda x: int(x.split('_')[1].split('.')[0]))
+	return label, np.stack([imread(os.path.join(sequence_dir,f)) for f in frames])
+
+def iter_dir(src_dir = data_dir, func = xyt, depth = 6):
+	"""
+	Iterate over a directory and it's subdirectories to get to image frames of image data.
+
+	Args:
+		src_dir (str): Path to top level directory
+		func (Function): Function to use specific file for
+		depth (int): how many files of each subdir to parse
+
+	Returns:
+		Dictionary where keys are class labels and values are all parsed images of that class
+	"""
+	data = {}
+	for sub_dir in sorted(os.listdir(src_dir)):
+		count = 0
+		label = int(sub_dir.split('_')[1])
+		for frame in sorted(os.listdir(os.path.join(src_dir, sub_dir))):
+			if count >= depth:
+				break
+			path = os.path.join(src_dir, sub_dir, frame)
+			im = imread(path)
+			if label not in data:
+				data[label] = []
+			data[label].append(im)
+			count += 1
+
+	return data
+
 
 # Problem 1 execution
 def p1():
@@ -286,14 +319,14 @@ def p1_old():
 
 	# P 1.3
 	#hists = generate_hist(features, centroids)
-	hists = generate_hist(None, None, json_cache) # Cache version
+	hists = generate_hist(None, None, None) # Cache version
 	#generate_json(features, centroids, hists) # NOTE: Only run once
 	#print "done"
 	# P 1.4 
 	all_matches = []
 	total_count = 0
 	with open(output_file, 'w') as out:
-		for d in data_dirs:
+		for d in data_dir:
 			count = 0
 			for fp in sorted(os.listdir(os.path.join(os.getcwd(), 'Data', d))):
 				count += 1
@@ -330,5 +363,5 @@ def p1_old():
 		print "%s classification accuracy: %d%s" % (class_name, ((float(stats[0])/float(stats[1])))*100, '%')
 
 if __name__ == '__main__':
-	p1()
-
+	#p1()
+	iter_dir()
