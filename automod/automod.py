@@ -89,11 +89,11 @@ class Automod(object):
 
 	def comment(self, post_id, message):
 		"""
-		Comment on a specific post with specied message.
+		Comment on a specific post with specified message.
 
 		Args:
 			post_id (int): ID of post to reply to - NOT comment ID
-			message (str): String of reply to publish
+			message (str): Reply to publish
 		"""
 		url = "https://graph.facebook.com/{0}/comments".format(post_id)
 		params = {'access_token' : self.token, 'message' : message}
