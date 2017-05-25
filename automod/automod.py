@@ -4,7 +4,10 @@ import requests
 import sys
 
 responses = {'ayy': 'lmao',
-			 'what the ay': 'What the ayy did you just say to me you little lmao?'}
+			 'what the ay': 'What the ayy did you just say to me you little lmao?',
+			 'Luke Doman': '@Luke Doman', #TODO: Fix
+			 'good automod': 'Ayyy danks m8',
+			 'bad automod': 'What the ayy did you just say to me you little lmao?'}
 
 class Automod(object):
 	"""
@@ -44,7 +47,7 @@ class Automod(object):
 		return g_id
 
 	def scan(self):
-		#self.fb = facebook.GraphAPI(self.token)
+		""" Scan the given group for posts and respond when appropriate	"""
 		feed = self.fb.get_connections(self.g_id, "feed")['data']
 		for post in feed:
 			reply_flag = True
@@ -59,7 +62,10 @@ class Automod(object):
 					if com['from']['id'] == self.id:
 						reply_flag = False # TODO: fix
 				response = self.get_action(post_data)
-				print 'Reply: ' + str(response)
+				print 'Reply(%s): %s' % (reply_flag, response)
+				if reply_flag and response:
+					print "Replying..."
+					self.comment(post['id'], response)
 				print ''
 			except KeyError:
 				continue
@@ -69,7 +75,7 @@ class Automod(object):
 		Given a list of texts determine appropriate response.
 
 		Args:
-			data (List of str): The original post message and all comments
+			data (List of str): A single post message and all of it's comments
 
 		Returns:
 			String if response required
@@ -81,6 +87,17 @@ class Automod(object):
 					return resp
 		return None
 
+	def comment(self, post_id, message):
+		"""
+		Comment on a specific post with specied message.
+
+		Args:
+			post_id (int): ID of post to reply to - NOT comment ID
+			message (str): String of reply to publish
+		"""
+		url = "https://graph.facebook.com/{0}/comments".format(post_id)
+		params = {'access_token' : self.token, 'message' : message}
+		s = requests.post(url, data = params)
 
 if __name__ == "__main__":
 	Automod().scan()
