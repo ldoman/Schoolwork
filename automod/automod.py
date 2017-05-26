@@ -1,3 +1,9 @@
+"""
+Facebook AutoModerator for groups.
+"""
+
+__author__ = 'Luke Doman'
+
 import csv
 import facebook
 import os
@@ -5,11 +11,6 @@ import requests
 import sys
 
 valid_actions = ['comment'] #TODO: tag, log, warn, ban
-responses = {'ayy': 'lmao',
-			 'what the ay': 'What the ayy did you just say to me you little lmao?',
-			 'Luke Doman': '@Luke Doman', #TODO: Fix
-			 'good automod': 'Ayyy danks m8',
-			 'bad automod': 'What the ayy did you just say to me you little lmao?'}
 
 class Automod(object):
 	"""
@@ -69,7 +70,7 @@ class Automod(object):
 		return rules
 
 	def scan(self):
-		""" Scan the given group for posts and respond when appropriate	"""
+		""" Scan the given group for posts and respond when required """
 		feed = self.fb.get_connections(self.g_id, "feed")['data']
 		for post in feed:
 			reply_flag = True
@@ -82,13 +83,10 @@ class Automod(object):
 					post_data.append(com['message'])
 					#print 'Comment: ' + com['message']
 					if com['from']['id'] == self.id:
-						reply_flag = False # TODO: fix
+						reply_flag = False # Currently assumes if it already commented to not reply again
 				response = self.get_actions(post_data)
-				#print 'Reply(%s): %s' % (reply_flag, response)
 				if reply_flag and response:
-					#print "Replying..."
 					self.action_router(post['id'], response)
-				#print ''
 			except KeyError:
 				continue
 
@@ -100,7 +98,7 @@ class Automod(object):
 			data (List of str): A single post message and all of it's comments
 
 		Returns:
-			String if response required
+			List of actions if response required
 			None otherwise
 		"""
 		actions = []
