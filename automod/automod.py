@@ -1,8 +1,10 @@
+import csv
 import facebook
 import os
 import requests
 import sys
 
+valid_actions = ['comment']
 responses = {'ayy': 'lmao',
 			 'what the ay': 'What the ayy did you just say to me you little lmao?',
 			 'Luke Doman': '@Luke Doman', #TODO: Fix
@@ -11,22 +13,23 @@ responses = {'ayy': 'lmao',
 
 class Automod(object):
 	"""
-	Automod object capable of parsing Facebook group feeds and replying when appropriate.
+	Automod object capable of parsing Facebook group feeds and moderating when appropriate.
 
 	Attrs:
 		token (str): Token required for FB account
 		fb (FB Graph): Instance of FB graph API
 		id (int): Facebook user ID of automod
 		g_id (int): ID of group to "moderate"
-	
+		rules (Dict): Dictionary of automod rules, in format of 'query':[(action, args)]
 	"""
-	def __init__(self, group_name = 'test_env'):
-		self.token = self.get_token()
+	def __init__(self, group_name = 'test_env', csv_name = 'Automod Rules - Sheet1.csv'):
+		self.token = self.__get_token()
 		self.fb = facebook.GraphAPI(self.token)
 		self.id = self.fb.get_object("me")['id']
-		self.g_id = self.get_group_id(group_name)
+		self.g_id = self.__get_group_id(group_name)
+		self.rules = self.__parse_rules(csv_name)
 
-	def get_token(self):
+	def __get_token(self):
 		token = None
 		with open('token.txt') as tok:
 			token = tok.readlines()[0]
@@ -35,7 +38,7 @@ class Automod(object):
 			sys.exit(1)
 		return token
 
-	def get_group_id(self, mod_group):
+	def __get_group_id(self, mod_group):
 		g_id = None
 		groups = self.fb.get_connections("me", "groups")['data']
 		for group in groups:
@@ -45,6 +48,23 @@ class Automod(object):
 			print "Error getting group id. Aborting..."
 			sys.exit(1)
 		return g_id
+
+	def __parse_rules(self, csv_name):
+		"""
+		Parses logic for Automod from the csv to build the rules dictionary. 
+		The dictionary is of the format: 'query':[(action, args)]
+		"""
+		rules = {}
+		with open(csv_name) as data:
+			csv_reader = csv.DictReader(data)
+			for line in csv_reader:
+				rule = []
+				actions = line['Action(s)'].replace(" ", "").lower().split(',')
+				for action in actions:
+					rule.append((action, line['Args']))
+				rules[line['Query']] = rule
+
+		return rules
 
 	def scan(self):
 		""" Scan the given group for posts and respond when appropriate	"""
@@ -72,7 +92,7 @@ class Automod(object):
 
 	def get_action(self, data):
 		"""
-		Given a list of texts determine appropriate response.
+		Given a list of texts determine appropriate response(s).
 
 		Args:
 			data (List of str): A single post message and all of it's comments
@@ -100,5 +120,5 @@ class Automod(object):
 		s = requests.post(url, data = params)
 
 if __name__ == "__main__":
-	Automod().scan()
+	Automod()#.scan()
 
