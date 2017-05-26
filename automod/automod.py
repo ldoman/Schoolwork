@@ -4,7 +4,7 @@ import os
 import requests
 import sys
 
-valid_actions = ['comment']
+valid_actions = ['comment'] #TODO: tag, log, warn, ban
 responses = {'ayy': 'lmao',
 			 'what the ay': 'What the ayy did you just say to me you little lmao?',
 			 'Luke Doman': '@Luke Doman', #TODO: Fix
@@ -61,6 +61,8 @@ class Automod(object):
 				rule = []
 				actions = line['Action(s)'].replace(" ", "").lower().split(',')
 				for action in actions:
+					if action not in valid_actions:
+						continue
 					rule.append((action, line['Args']))
 				rules[line['Query']] = rule
 
@@ -74,23 +76,23 @@ class Automod(object):
 			post_data = []
 			try:
 				post_data.append(post['message'])
-				print 'Post: ' + post['message']
+				#print 'Post: ' + post['message']
 				comments = self.fb.get_connections(post['id'], 'comments')['data']
 				for com in comments:
 					post_data.append(com['message'])
-					print 'Comment: ' + com['message']
+					#print 'Comment: ' + com['message']
 					if com['from']['id'] == self.id:
 						reply_flag = False # TODO: fix
-				response = self.get_action(post_data)
-				print 'Reply(%s): %s' % (reply_flag, response)
+				response = self.get_actions(post_data)
+				#print 'Reply(%s): %s' % (reply_flag, response)
 				if reply_flag and response:
-					print "Replying..."
-					self.comment(post['id'], response)
-				print ''
+					#print "Replying..."
+					self.action_router(post['id'], response)
+				#print ''
 			except KeyError:
 				continue
 
-	def get_action(self, data):
+	def get_actions(self, data):
 		"""
 		Given a list of texts determine appropriate response(s).
 
@@ -101,11 +103,12 @@ class Automod(object):
 			String if response required
 			None otherwise
 		"""
-		for query, resp in responses.iteritems():
-			for mes in data:
-				if query in mes:
-					return resp
-		return None
+		actions = []
+		for query, action in self.rules.iteritems():
+			for message in data:
+				if query in message:
+					actions = actions + action
+		return actions if actions else None
 
 	def comment(self, post_id, message):
 		"""
@@ -115,10 +118,24 @@ class Automod(object):
 			post_id (int): ID of post to reply to - NOT comment ID
 			message (str): Reply to publish
 		"""
+		print "Commenting..."
 		url = "https://graph.facebook.com/{0}/comments".format(post_id)
 		params = {'access_token' : self.token, 'message' : message}
 		s = requests.post(url, data = params)
 
+	def action_router(self, post_id, actions):
+		""" 
+		Receives a list of actions to perform and routes them to correct functions.
+		This function must be below any functions it routes to for the action map to work.
+
+		Args:
+			post_id (int): ID of post to take action on.
+			actions (list): List of actions to take
+		"""
+		action_map = {'comment': self.comment}
+		for action in actions:
+			action_map[action[0]](post_id, action[1])
+
 if __name__ == "__main__":
-	Automod()#.scan()
+	Automod().scan()
 
